@@ -26,6 +26,9 @@ authRouter.post(
   ],
   async (req, res, next) => {
     try {
+      if (!JWT_SECRET) {
+        return res.status(500).json({ error: "Server misconfiguration (JWT_SECRET)" });
+      }
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });

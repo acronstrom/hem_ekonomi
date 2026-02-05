@@ -1,28 +1,38 @@
 # Deploying Hem Ekonomi
 
-## Frontend on Vercel
+## Full stack on Vercel (frontend + API)
 
-The React app is set up to deploy on [Vercel](https://vercel.com).
+The repo is set up so both the React app and the Express API run on the same Vercel project.
 
 ### 1. Connect the repo
 
 1. Go to [vercel.com](https://vercel.com) and sign in (e.g. with GitHub).
-2. **Add New** → **Project** and import `acronstrom/hem_ekonomi` (or your fork).
-3. Leave **Root Directory** as the repo root (`.`). The repo’s `vercel.json` defines build/output from `client/`.
+2. **Add New** → **Project** and import your repo.
+3. Leave **Root Directory** as the repo root (`.`). The repo’s `vercel.json` defines the build.
 
-### 2. Environment variable
+### 2. Required environment variables
 
-Add a variable for the backend URL (needed when the API is not on the same host):
+In the project **Settings → Environment Variables** add:
 
-- **Name:** `VITE_API_ORIGIN`
-- **Value:** Your API base URL, e.g. `https://your-api.railway.app` or `https://your-api.onrender.com`  
-  No trailing slash.
+| Variable        | Required | Description |
+|----------------|----------|-------------|
+| `DATABASE_URL` | Yes      | Postgres connection string. Use [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres): Storage → Create Database → Postgres, then connect the DB to the project so this is set automatically. |
+| `JWT_SECRET`   | Yes      | A long random string (e.g. 32+ characters) for signing auth tokens. If missing, registration/login will return “Server misconfiguration (JWT_SECRET)”. |
+| `CLIENT_ORIGIN`| No       | Comma-separated list of allowed origins, e.g. `https://hemekonomi.vercel.app`. If unset in production, the same-origin request is allowed so your Vercel frontend works. Set it if you use a custom domain or another frontend. |
+| `VITE_API_ORIGIN` | No    | Leave unset when frontend and API are on the same Vercel domain; the app will call `/api` on the same origin. |
 
-If you leave this unset, the app will call `/api` on the same origin (works only if you proxy API elsewhere to the same domain).
+### 3. Database and schema
 
-### 3. Deploy
+After adding Vercel Postgres and setting `DATABASE_URL`, run the schema once from your machine:
 
-Click **Deploy**. Vercel will run `cd client && npm install` and `npm run build`, then serve `client/dist` with SPA rewrites.
+```bash
+cd server
+DATABASE_URL="<paste your Postgres URL from Vercel>" npx prisma db push
+```
+
+### 4. Deploy
+
+Click **Deploy**. The build installs client and server deps, runs Prisma generate, and builds the client. The API is served under `/api/*` as a serverless function.
 
 ---
 

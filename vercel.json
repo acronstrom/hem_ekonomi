@@ -3,5 +3,8 @@
   "outputDirectory": "client/dist",
   "installCommand": "npm install && cd client && npm install && cd ../server && npm install && npx prisma generate",
   "framework": null,
-  "rewrites": [{ "source": "/((?!api).*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api?path=/$1" },
+    { "source": "/((?!api).*)", "destination": "/index.html" }
+  ]
 }

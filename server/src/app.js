@@ -21,6 +21,8 @@ function corsOrigin(origin, cb) {
   if (process.env.NODE_ENV !== "production" && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
     return cb(null, true);
   }
+  // Production with no CLIENT_ORIGIN set (e.g. same-origin on Vercel): allow request origin
+  if (allowList.length === 0 && process.env.NODE_ENV === "production") return cb(null, true);
   if (allowList.includes(origin)) return cb(null, true);
   return cb(null, allowList[0] || false);
 }
