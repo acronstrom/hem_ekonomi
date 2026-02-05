@@ -79,8 +79,12 @@ npm run dev:client   # frontend only (ensure backend is running)
 - `PATCH /api/expenses/:id` – Update expense (requires auth)
 - `DELETE /api/expenses/:id` – Delete expense (requires auth)
 
+## Deploy (Vercel)
+
+The frontend can be deployed to [Vercel](https://vercel.com): connect this repo and add the env var `VITE_API_ORIGIN` with your backend URL. The backend (Express + PostgreSQL) should be deployed elsewhere (e.g. [Railway](https://railway.app) or [Render](https://render.com)). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for step-by-step instructions.
+
 ## Tech stack
 
-- **Frontend**: React 18, React Router, Vite
+- **Frontend**: React 18, React Router, Vite, Recharts
 - **Backend**: Express, Prisma, bcryptjs, jsonwebtoken, express-validator, helmet, cors
 - **Database**: PostgreSQL with Prisma ORM
