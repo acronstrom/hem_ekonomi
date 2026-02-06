@@ -33,6 +33,8 @@ export default function Dashboard({
   const [savingIncome, setSavingIncome] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expenseView, setExpenseView] = useState("section");
+  const [showSectionCharts, setShowSectionCharts] = useState(false);
 
   const API = `${apiBase}/api`;
 
@@ -118,8 +120,33 @@ export default function Dashboard({
     .filter((i) => LOAN_SECTION_MATCH.test(i.section || ""))
     .reduce((sum, i) => sum + Number(i.amount), 0);
 
+  const byCategory = {};
+  thisMonthItems.forEach((item) => {
+    const c = (item.category && item.category.trim()) || "—";
+    if (!byCategory[c]) byCategory[c] = 0;
+    byCategory[c] += Number(item.amount);
+  });
+
   const sectionList = Object.entries(bySection).sort((a, b) => b[1] - a[1]);
+  const categoryList = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
   const pieData = sectionList.map(([name, amount]) => ({ name, value: amount }));
+  const categoryPieData = categoryList.map(([name, amount]) => ({ name, value: amount }));
+
+  const bySectionWithCategories = {};
+  thisMonthItems.forEach((item) => {
+    const s = item.section || "Övrigt";
+    if (!bySectionWithCategories[s]) bySectionWithCategories[s] = {};
+    const c = (item.category && item.category.trim()) || "—";
+    if (!bySectionWithCategories[s][c]) bySectionWithCategories[s][c] = 0;
+    bySectionWithCategories[s][c] += Number(item.amount);
+  });
+  const sectionChartData = Object.entries(bySectionWithCategories).map(([section, cats]) => ({
+    section,
+    data: Object.entries(cats)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value),
+  }));
+
   const barData = recentMonths.map(({ month, year, total }) => ({
     month: `${MONTHS[month - 1].slice(0, 3)} ${year}`,
     total,
@@ -300,40 +327,137 @@ export default function Dashboard({
 
       <div className="dashboard-grid">
         <section className="dashboard-section dashboard-by-section">
-          <h3>Utgifter per sektion</h3>
-          {sectionList.length === 0 ? (
+          <div className="dashboard-section-header-row">
+            <h3>
+              {expenseView === "section" ? "Utgifter per sektion" : "Utgifter per kategori"}
+            </h3>
+            <div className="dashboard-view-toggles">
+              <button
+                type="button"
+                className={`btn btn-ghost btn-sm ${expenseView === "section" ? "active" : ""}`}
+                onClick={() => setExpenseView("section")}
+              >
+                Per sektion
+              </button>
+              <button
+                type="button"
+                className={`btn btn-ghost btn-sm ${expenseView === "category" ? "active" : ""}`}
+                onClick={() => setExpenseView("category")}
+              >
+                Per kategori
+              </button>
+            </div>
+          </div>
+          {thisMonthItems.length === 0 ? (
             <p className="dashboard-empty">Inga utgifter registrerade för denna månad.</p>
           ) : (
             <>
-              <ul className="dashboard-section-list">
-                {sectionList.map(([name, amount]) => (
-                  <li key={name} className="dashboard-section-row">
-                    <span className="dashboard-section-name">{name}</span>
-                    <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
-                  </li>
-                ))}
-              </ul>
-              {pieData.length > 0 && (
-                <div className="dashboard-chart-wrap">
-                  <ResponsiveContainer width="100%" height={220}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {pieData.map((_, i) => (
-                          <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+              {expenseView === "section" && (
+                <>
+                  <ul className="dashboard-section-list">
+                    {sectionList.map(([name, amount]) => (
+                      <li key={name} className="dashboard-section-row">
+                        <span className="dashboard-section-name">{name}</span>
+                        <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {pieData.length > 0 && (
+                    <div className="dashboard-chart-wrap">
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {pieData.map((_, i) => (
+                              <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v) => formatCurrency(v)} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                  {sectionList.length > 0 && (
+                    <label className="dashboard-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={showSectionCharts}
+                        onChange={(e) => setShowSectionCharts(e.target.checked)}
+                      />
+                      Visa diagram per sektion
+                    </label>
+                  )}
+                  {showSectionCharts && sectionChartData.filter(({ data: d }) => d.length > 0).length > 0 && (
+                    <div className="dashboard-per-section-charts">
+                      {sectionChartData
+                        .filter(({ data: d }) => d.length > 0)
+                        .map(({ section, data }) => (
+                          <div key={section} className="dashboard-section-chart-block">
+                            <h4 className="dashboard-section-chart-title">{section}</h4>
+                            <ResponsiveContainer width="100%" height={160}>
+                              <PieChart>
+                                <Pie
+                                  data={data}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={55}
+                                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                  {data.map((_, i) => (
+                                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(v) => formatCurrency(v)} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
                         ))}
-                      </Pie>
-                      <Tooltip formatter={(v) => formatCurrency(v)} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                    </div>
+                  )}
+                </>
+              )}
+              {expenseView === "category" && (
+                <>
+                  <ul className="dashboard-section-list">
+                    {categoryList.map(([name, amount]) => (
+                      <li key={name} className="dashboard-section-row">
+                        <span className="dashboard-section-name">{name}</span>
+                        <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {categoryPieData.length > 0 && (
+                    <div className="dashboard-chart-wrap">
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie
+                            data={categoryPieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {categoryPieData.map((_, i) => (
+                              <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v) => formatCurrency(v)} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

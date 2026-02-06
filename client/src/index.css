@@ -431,6 +431,58 @@ a:hover {
   font-size: 1rem;
   font-weight: 600;
 }
+.dashboard-section-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.dashboard-section-header-row h3 {
+  margin: 0;
+}
+.dashboard-view-toggles {
+  display: flex;
+  gap: 0.25rem;
+}
+.dashboard-view-toggles .btn.active {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.dashboard-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.dashboard-checkbox-label input {
+  width: 1rem;
+  height: 1rem;
+}
+.dashboard-per-section-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.dashboard-section-chart-block {
+  background: var(--surface-hover);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+.dashboard-section-chart-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+}
 .dashboard-empty {
   margin: 0 0 1rem;
   font-size: 0.875rem;
