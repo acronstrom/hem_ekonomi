@@ -12,6 +12,14 @@
     />
   </head>
   <body>
+    <script>
+      (function() {
+        var s = localStorage.getItem('hem-ekonomi-theme');
+        if (s === 'light' || s === 'dark') document.documentElement.setAttribute('data-theme', s);
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+        else document.documentElement.setAttribute('data-theme', 'dark');
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

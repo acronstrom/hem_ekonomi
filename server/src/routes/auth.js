@@ -106,6 +106,9 @@ authRouter.post("/logout", (_req, res) => {
 
 authRouter.get("/me", async (req, res, next) => {
   try {
+    if (!JWT_SECRET) {
+      return res.status(500).json({ error: "Server misconfiguration (JWT_SECRET)" });
+    }
     const token =
       req.cookies?.token ||
       req.headers.authorization?.replace("Bearer ", "") ||
@@ -123,6 +126,9 @@ authRouter.get("/me", async (req, res, next) => {
   } catch (err) {
     if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
       return res.status(401).json({ error: "Invalid or expired session" });
+    }
+    if (err.code === "P1013" || err.message?.includes("Invalid `prisma")) {
+      return res.status(503).json({ error: "Database unavailable" });
     }
     next(err);
   }

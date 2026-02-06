@@ -1,4 +1,6 @@
-:root {
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
   --bg: #0f1419;
   --surface: #1a2332;
   --surface-hover: #243044;
@@ -11,6 +13,20 @@
   --error: #ef4444;
   --radius: 12px;
   --font: "DM Sans", system-ui, sans-serif;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --surface-hover: #e8eef4;
+  --border: #d1dce8;
+  --text: #1a2332;
+  --text-muted: #5a6b7d;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --success: #16a34a;
+  --error: #dc2626;
 }
 
 *,
@@ -115,14 +131,49 @@ a:hover {
   font-size: 0.875rem;
 }
 
+/* Theme toggle */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.theme-toggle-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.portal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Auth */
 .auth-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
   background: radial-gradient(ellipse at 50% 0%, var(--surface) 0%, transparent 60%);
+}
+.auth-page > .theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
 }
 .auth-card {
   width: 100%;

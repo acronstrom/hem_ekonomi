@@ -5,6 +5,7 @@ import MonthlySheet from "../components/MonthlySheet";
 import Dashboard from "../components/Dashboard";
 import CategoryManager from "../components/CategoryManager";
 import CopyFromMonth from "../components/CopyFromMonth";
+import ThemeToggle from "../components/ThemeToggle";
 import { API_BASE } from "../api";
 
 const API = `${API_BASE}/api`;
@@ -195,9 +196,12 @@ export default function Portal() {
             {user?.name || user?.email}
           </p>
         </div>
-        <button type="button" className="btn btn-ghost" onClick={logout}>
-          Logga ut
-        </button>
+        <div className="portal-header-actions">
+          <ThemeToggle />
+          <button type="button" className="btn btn-ghost" onClick={logout}>
+            Logga ut
+          </button>
+        </div>
       </header>
 
       <main className="portal-main">

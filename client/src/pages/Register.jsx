@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle />
       <div className="auth-card">
         <div className="auth-header">
           <h1>Hem Ekonomi</h1>
