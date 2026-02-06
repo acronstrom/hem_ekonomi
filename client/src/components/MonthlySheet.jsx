@@ -96,24 +96,6 @@ export default function MonthlySheet({
     }
   }
 
-  async function handleAddEmptySection() {
-    setOtherError("");
-    const sectionName = otherSection.trim();
-    if (!sectionName) {
-      setOtherError("Ange sektionsnamn");
-      return;
-    }
-    if (onAddCustomSection) {
-        onAddCustomSection(sectionName);
-        if (otherIsCardSection && onAddCardSection) await onAddCardSection(sectionName);
-        setOtherSection("");
-        setOtherLineName("");
-        setOtherAmount("");
-        setOtherIsCardSection(false);
-        setShowOtherSection(false);
-      }
-  }
-
   if (loading) {
     return <div className="portal-loading">Laddar månadsdata...</div>;
   }
@@ -186,15 +168,6 @@ export default function MonthlySheet({
             <button type="submit" className="btn btn-primary btn-sm">
               {otherLineName.trim() && otherAmount ? "Lägg till rad" : "Skapa tom sektion"}
             </button>
-            {onAddCustomSection && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={handleAddEmptySection}
-              >
-                Skapa tom sektion
-              </button>
-            )}
             <button
               type="button"
               className="btn btn-ghost btn-sm"

@@ -46,8 +46,9 @@ function parseBankCsv(text, filterMonth, filterYear) {
     const country = (cols[9] || "").replace(/^""$/, "");
     const exchangeRate = (cols[10] || "").replace(",", ".");
     if (!rubrik) continue;
-    const amount = Math.abs(parseFloat(beloppStr));
-    if (Number.isNaN(amount) || amount <= 0) continue;
+    const rawAmount = parseFloat(beloppStr);
+    if (Number.isNaN(rawAmount) || rawAmount >= 0) continue; // only expenditures (negative); skip INBETALNING / payments
+    const amount = Math.abs(rawAmount);
     const meta = {
       transactionDate: transactionDate || undefined,
       bookingDate: bookingDate || undefined,
