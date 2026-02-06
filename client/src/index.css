@@ -854,6 +854,36 @@ a:hover {
   padding: 0.75rem 1rem;
   background: var(--bg);
 }
+.sheet-section-view-toggle {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem 0;
+}
+.sheet-section-view-toggle .btn.active {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.sheet-category-group-header td {
+  padding: 0.75rem 1rem 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--surface-hover);
+}
+.sheet-category-group-header:first-child td {
+  border-top: none;
+}
+.sheet-category-group-subtotal td {
+  padding: 0.5rem 1rem 0.75rem;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-hover);
+}
+.sheet-category-group-subtotal .sheet-td-amount {
+  font-weight: 600;
+}
 .sheet-section-total {
   display: flex;
   justify-content: space-between;

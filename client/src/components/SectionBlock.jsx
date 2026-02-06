@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
@@ -27,8 +27,17 @@ export default function SectionBlock({
   const [editAmount, setEditAmount] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [error, setError] = useState("");
+  const [groupByCategory, setGroupByCategory] = useState(false);
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.amount), 0);
+
+  const byCategory = items.reduce((acc, item) => {
+    const cat = item.category?.trim() || "—";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
+  const categoryOrder = Object.keys(byCategory).sort((a, b) => (a === "—" ? 1 : b === "—" ? -1 : a.localeCompare(b)));
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -163,6 +172,24 @@ export default function SectionBlock({
           </>
         )}
       </div>
+      {!editingHeader && items.length > 0 && (
+        <div className="sheet-section-view-toggle">
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm ${!groupByCategory ? "active" : ""}`}
+            onClick={() => setGroupByCategory(false)}
+          >
+            Visa som lista
+          </button>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm ${groupByCategory ? "active" : ""}`}
+            onClick={() => setGroupByCategory(true)}
+          >
+            Gruppera per kategori
+          </button>
+        </div>
+      )}
       <table className="sheet-table">
         <thead>
           <tr>
@@ -180,7 +207,7 @@ export default function SectionBlock({
               </td>
             </tr>
           )}
-          {items.map((item) => (
+          {items.length > 0 && !groupByCategory && items.map((item) => (
             <tr key={item.id} className="sheet-row">
               {editingId === item.id ? (
                 <>
@@ -272,6 +299,108 @@ export default function SectionBlock({
               )}
             </tr>
           ))}
+          {items.length > 0 && groupByCategory && categoryOrder.map((cat) => {
+            const groupItems = byCategory[cat];
+            const groupSum = groupItems.reduce((s, i) => s + Number(i.amount), 0);
+            return (
+              <Fragment key={cat}>
+                <tr className="sheet-category-group-header">
+                  <td colSpan={4}>Kategori: {cat}</td>
+                </tr>
+                {groupItems.map((item) => (
+                  <tr key={item.id} className="sheet-row">
+                    {editingId === item.id ? (
+                      <>
+                        <td>
+                          <input
+                            className="sheet-input"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder="Benämning"
+                          />
+                        </td>
+                        <td className="sheet-td-category">
+                          <select
+                            className="sheet-input sheet-select"
+                            value={editCategory}
+                            onChange={(e) => setEditCategory(e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {categories.map((c) => (
+                              <option key={c.id} value={c.name}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="sheet-td-amount">
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            className="sheet-input sheet-input-amount"
+                            value={editAmount}
+                            onChange={(e) => setEditAmount(e.target.value)}
+                            placeholder="0"
+                          />
+                        </td>
+                        <td className="sheet-td-actions">
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() =>
+                              handleUpdate(item.id, {
+                                lineName: editName.trim(),
+                                amount: parseFloat(editAmount) || 0,
+                                category: editCategory.trim() || null,
+                              })
+                            }
+                          >
+                            Spara
+                          </button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{item.lineName}</td>
+                        <td className="sheet-td-category sheet-category-cell">{item.category || "—"}</td>
+                        <td className="sheet-td-amount sheet-numeric">{fmt(item.amount)} kr</td>
+                        <td className="sheet-td-actions">
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setEditName(item.lineName);
+                              setEditAmount(String(item.amount));
+                              setEditCategory(item.category || "");
+                            }}
+                          >
+                            Redigera
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm btn-danger"
+                            onClick={() => {
+                              if (window.confirm("Ta bort raden?")) onDelete(item.id);
+                            }}
+                          >
+                            Ta bort
+                          </button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+                <tr className="sheet-category-group-subtotal">
+                  <td colSpan={2}>Summa {cat}</td>
+                  <td className="sheet-td-amount sheet-numeric">{fmt(groupSum)} kr</td>
+                  <td />
+                </tr>
+              </Fragment>
+            );
+          })}
           {adding && (
             <tr className="sheet-row sheet-row-add">
               <td colSpan={4}>
