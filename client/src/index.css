@@ -618,6 +618,25 @@ a:hover {
   color: var(--text-muted);
 }
 .dashboard-expanded-list-members { margin-bottom: 1rem; }
+.dashboard-expanded-list-income .dashboard-expanded-income-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+.dashboard-expanded-income-row > span:first-of-type { flex: 1 1 auto; min-width: 0; }
+.dashboard-expanded-income-amount { font-weight: 500; }
+.dashboard-expanded-income-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
+.dashboard-expanded-income-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.dashboard-income-edit-source { min-width: 120px; }
+.dashboard-income-edit-member { min-width: 100px; }
+.dashboard-income-edit-amount { width: 90px; }
 .dashboard-card-savings .positive {
   color: var(--success);
 }

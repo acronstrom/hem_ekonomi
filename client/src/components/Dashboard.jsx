@@ -31,6 +31,10 @@ export default function Dashboard({
   const [savingBudget, setSavingBudget] = useState(false);
   const [newIncome, setNewIncome] = useState({ source: "", amount: "", member: "" });
   const [savingIncome, setSavingIncome] = useState(false);
+  const [editingIncomeId, setEditingIncomeId] = useState(null);
+  const [editIncomeSource, setEditIncomeSource] = useState("");
+  const [editIncomeMember, setEditIncomeMember] = useState("");
+  const [editIncomeAmount, setEditIncomeAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expenseView, setExpenseView] = useState("section");
@@ -221,6 +225,37 @@ export default function Dashboard({
       setError(err.message);
     } finally {
       setSavingIncome(false);
+    }
+  }
+
+  async function handleUpdateIncome(id, payload) {
+    try {
+      const res = await fetch(`${API}/income/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Kunde inte uppdatera inkomst");
+      const data = await res.json();
+      setIncomeItems((prev) => prev.map((i) => (i.id === id ? data.item : i)));
+      setEditingIncomeId(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDeleteIncome(id) {
+    try {
+      const res = await fetch(`${API}/income/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Kunde inte ta bort inkomst");
+      setIncomeItems((prev) => prev.filter((i) => i.id !== id));
+      setEditingIncomeId(null);
+    } catch (err) {
+      setError(err.message);
     }
   }
 
@@ -656,11 +691,86 @@ export default function Dashboard({
                 {incomeItems.length > 0 && (
                   <>
                     <h4 className="dashboard-expanded-detail-title">Alla poster</h4>
-                    <ul className="dashboard-expanded-list">
+                    <ul className="dashboard-expanded-list dashboard-expanded-list-income">
                       {incomeItems.map((i) => (
-                        <li key={i.id}>
-                          <span>{i.source}{i.member ? ` · ${i.member}` : ""}</span>
-                          <span>{formatCurrency(i.amount)}</span>
+                        <li key={i.id} className="dashboard-expanded-income-row">
+                          {editingIncomeId === i.id ? (
+                            <div className="dashboard-expanded-income-edit">
+                              <input
+                                type="text"
+                                className="sheet-input dashboard-income-edit-source"
+                                value={editIncomeSource}
+                                onChange={(e) => setEditIncomeSource(e.target.value)}
+                                placeholder="Källa"
+                              />
+                              <input
+                                type="text"
+                                className="sheet-input dashboard-income-edit-member"
+                                value={editIncomeMember}
+                                onChange={(e) => setEditIncomeMember(e.target.value)}
+                                placeholder="Medlem (valfritt)"
+                              />
+                              <input
+                                type="text"
+                                className="sheet-input dashboard-income-edit-amount"
+                                value={editIncomeAmount}
+                                onChange={(e) => setEditIncomeAmount(e.target.value)}
+                                placeholder="Belopp"
+                                inputMode="decimal"
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                onClick={() => {
+                                  const amount = Number(String(editIncomeAmount).replace(/\s/g, "").replace(",", "."));
+                                  const source = editIncomeSource.trim();
+                                  if (!source || Number.isNaN(amount) || amount < 0) return;
+                                  handleUpdateIncome(i.id, {
+                                    source,
+                                    amount,
+                                    member: editIncomeMember.trim() || undefined,
+                                  });
+                                }}
+                              >
+                                Spara
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => setEditingIncomeId(null)}
+                              >
+                                Avbryt
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span>{i.source}{i.member ? ` · ${i.member}` : ""}</span>
+                              <span className="dashboard-expanded-income-amount">{formatCurrency(i.amount)}</span>
+                              <span className="dashboard-expanded-income-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={() => {
+                                    setEditingIncomeId(i.id);
+                                    setEditIncomeSource(i.source);
+                                    setEditIncomeMember(i.member || "");
+                                    setEditIncomeAmount(String(i.amount));
+                                  }}
+                                >
+                                  Redigera
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-ghost btn-sm btn-danger"
+                                  onClick={() => {
+                                    if (window.confirm("Ta bort denna inkomstpost?")) handleDeleteIncome(i.id);
+                                  }}
+                                >
+                                  Ta bort
+                                </button>
+                              </span>
+                            </>
+                          )}
                         </li>
                       ))}
                     </ul>
