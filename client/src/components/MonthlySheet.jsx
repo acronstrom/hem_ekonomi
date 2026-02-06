@@ -39,7 +39,9 @@ export default function MonthlySheet({
   });
 
   const displayValues = Object.values(sectionDisplayNames);
-  const sectionOrder = [...DEFAULT_SECTIONS];
+  const hasItems = (s) => (bySection[sectionDisplayNames[s] || s] || []).length > 0;
+  const sectionOrder = [...DEFAULT_SECTIONS]
+    .filter((s) => hasItems(s) || customSectionNames.includes(s));
   customSectionNames
     .filter((s) => !DEFAULT_SECTIONS.includes(s) && !displayValues.includes(s))
     .forEach((s) => sectionOrder.push(s));
