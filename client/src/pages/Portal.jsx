@@ -264,31 +264,6 @@ export default function Portal() {
           </div>
         </nav>
 
-        {view === "dashboard" && (
-          <Dashboard
-            apiBase={API_BASE}
-            currentMonth={month}
-            currentYear={year}
-            onMonthChange={setMonth}
-            onYearChange={setYear}
-            onOpenMonth={() => setView("sheet")}
-          />
-        )}
-
-        {view === "sheet" && (
-          <div className="portal-sheet-wrap">
-            <div className="portal-toolbar">
-              <div className="portal-section-header">
-                <h2>Månadsöversikt</h2>
-                <MonthYearPicker
-                  month={month}
-                  year={year}
-                  onMonthChange={setMonth}
-                  onYearChange={setYear}
-                />
-              </div>
-            </div>
-
         {showCopyFromMonth && (
           <CopyFromMonth
             currentMonth={month}
@@ -314,6 +289,31 @@ export default function Portal() {
             onClose={() => setShowAddUser(false)}
           />
         )}
+
+        {view === "dashboard" && (
+          <Dashboard
+            apiBase={API_BASE}
+            currentMonth={month}
+            currentYear={year}
+            onMonthChange={setMonth}
+            onYearChange={setYear}
+            onOpenMonth={() => setView("sheet")}
+          />
+        )}
+
+        {view === "sheet" && (
+          <div className="portal-sheet-wrap">
+            <div className="portal-toolbar">
+              <div className="portal-section-header">
+                <h2>Månadsöversikt</h2>
+                <MonthYearPicker
+                  month={month}
+                  year={year}
+                  onMonthChange={setMonth}
+                  onYearChange={setYear}
+                />
+              </div>
+            </div>
 
         <MonthlySheet
             items={lineItems}

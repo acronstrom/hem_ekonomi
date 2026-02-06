@@ -23,7 +23,11 @@ incomeRouter.get(
         where,
         orderBy: [{ year: "desc" }, { month: "desc" }, { source: "asc" }],
       });
-      const serialized = items.map((e) => ({ ...e, amount: Number(e.amount) }));
+      const serialized = items.map((e) => ({
+        ...e,
+        amount: Number(e.amount),
+        member: e.member ?? undefined,
+      }));
       res.json({ items: serialized });
     } catch (err) {
       next(err);
@@ -38,12 +42,14 @@ incomeRouter.post(
     body("year").isInt({ min: 2000, max: 2100 }).toInt(),
     body("source").trim().notEmpty().withMessage("Källa krävs"),
     body("amount").isFloat({ min: 0 }).withMessage("Belopp måste vara >= 0"),
+    body("member").optional().trim(),
   ],
   async (req, res, next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-      const { month, year, source, amount } = req.body;
+      const { month, year, source, amount, member } = req.body;
+      const memberVal = member != null && String(member).trim() !== "" ? String(member).trim() : null;
       const item = await prisma.monthlyIncome.create({
         data: {
           userId: req.user.id,
@@ -51,9 +57,12 @@ incomeRouter.post(
           year: Number(year),
           source: String(source).trim(),
           amount: Number(amount),
+          member: memberVal,
         },
       });
-      res.status(201).json({ item: { ...item, amount: Number(item.amount) } });
+      res.status(201).json({
+        item: { ...item, amount: Number(item.amount), member: item.member ?? undefined },
+      });
     } catch (err) {
       next(err);
     }
@@ -65,6 +74,7 @@ incomeRouter.patch(
   [
     body("source").optional().trim().notEmpty(),
     body("amount").optional().isFloat({ min: 0 }),
+    body("member").optional().trim(),
   ],
   async (req, res, next) => {
     try {
@@ -77,11 +87,16 @@ incomeRouter.patch(
       const updates = {};
       if (req.body.source !== undefined) updates.source = req.body.source;
       if (req.body.amount !== undefined) updates.amount = req.body.amount;
+      if (req.body.member !== undefined) {
+        updates.member = req.body.member != null && String(req.body.member).trim() !== "" ? String(req.body.member).trim() : null;
+      }
       const item = await prisma.monthlyIncome.update({
         where: { id: req.params.id },
         data: updates,
       });
-      res.json({ item: { ...item, amount: Number(item.amount) } });
+      res.json({
+        item: { ...item, amount: Number(item.amount), member: item.member ?? undefined },
+      });
     } catch (err) {
       next(err);
     }

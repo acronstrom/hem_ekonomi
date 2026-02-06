@@ -29,7 +29,7 @@ export default function Dashboard({
   const [budget, setBudget] = useState(null);
   const [budgetInput, setBudgetInput] = useState("");
   const [savingBudget, setSavingBudget] = useState(false);
-  const [newIncome, setNewIncome] = useState({ source: "", amount: "" });
+  const [newIncome, setNewIncome] = useState({ source: "", amount: "", member: "" });
   const [savingIncome, setSavingIncome] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -107,6 +107,15 @@ export default function Dashboard({
   const diff = thisTotal - prevTotal;
   const incomeTotal = incomeItems.reduce((sum, i) => sum + Number(i.amount), 0);
   const savings = incomeTotal - thisTotal;
+
+  // Per-member income for overview
+  const incomeByMember = {};
+  incomeItems.forEach((i) => {
+    const name = (i.member && String(i.member).trim()) || "—";
+    if (!incomeByMember[name]) incomeByMember[name] = 0;
+    incomeByMember[name] += Number(i.amount);
+  });
+  const memberSummaryList = Object.entries(incomeByMember).sort((a, b) => b[1] - a[1]);
   const budgetAmount = budget ? Number(budget.amount) : null;
   const budgetRemaining = budgetAmount != null ? budgetAmount - thisTotal : null;
 
@@ -184,6 +193,7 @@ export default function Dashboard({
     if (!source || Number.isNaN(amount) || amount < 0) return;
     setSavingIncome(true);
     try {
+      const member = String(newIncome.member || "").trim();
       const res = await fetch(`${API}/income`, {
         method: "POST",
         credentials: "include",
@@ -193,12 +203,13 @@ export default function Dashboard({
           year: currentYear,
           source,
           amount,
+          ...(member ? { member } : {}),
         }),
       });
       if (!res.ok) throw new Error("Kunde inte spara inkomst");
       const data = await res.json();
       setIncomeItems((prev) => [...prev, data.item]);
-      setNewIncome({ source: "", amount: "" });
+      setNewIncome({ source: "", amount: "", member: "" });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -273,6 +284,16 @@ export default function Dashboard({
           <span className="dashboard-card-label">Inkomst</span>
           <span className="dashboard-card-value">{formatCurrency(incomeTotal)}</span>
           <span className="dashboard-card-meta">Denna månad</span>
+          {memberSummaryList.length > 0 && (
+            <ul className="dashboard-income-by-member">
+              {memberSummaryList.map(([name, amount]) => (
+                <li key={name}>
+                  <span className="dashboard-income-member-name">{name}</span>
+                  <span className="dashboard-income-member-amount">{formatCurrency(amount)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <form className="dashboard-income-form" onSubmit={handleAddIncome}>
             <input
               type="text"
@@ -280,6 +301,14 @@ export default function Dashboard({
               placeholder="Källa (t.ex. Lön)"
               value={newIncome.source}
               onChange={(e) => setNewIncome((p) => ({ ...p, source: e.target.value }))}
+            />
+            <input
+              type="text"
+              className="sheet-input dashboard-income-member"
+              placeholder="Medlem (valfritt)"
+              value={newIncome.member}
+              onChange={(e) => setNewIncome((p) => ({ ...p, member: e.target.value }))}
+              title="Familjemedlem som har denna inkomst"
             />
             <input
               type="text"
@@ -558,12 +587,28 @@ export default function Dashboard({
                 <h3>Inkomst</h3>
                 <p className="dashboard-expanded-value">{formatCurrency(incomeTotal)}</p>
                 <p className="dashboard-expanded-meta">Denna månad</p>
+                {memberSummaryList.length > 0 && (
+                  <div className="dashboard-expanded-members">
+                    <h4 className="dashboard-expanded-members-title">Per familjemedlem</h4>
+                    <ul className="dashboard-expanded-list dashboard-expanded-list-members">
+                      {memberSummaryList.map(([name, amount]) => (
+                        <li key={name}><span>{name}</span><span>{formatCurrency(amount)}</span></li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {incomeItems.length > 0 && (
-                  <ul className="dashboard-expanded-list">
-                    {incomeItems.map((i) => (
-                      <li key={i.id}><span>{i.source}</span><span>{formatCurrency(i.amount)}</span></li>
-                    ))}
-                  </ul>
+                  <>
+                    <h4 className="dashboard-expanded-detail-title">Alla poster</h4>
+                    <ul className="dashboard-expanded-list">
+                      {incomeItems.map((i) => (
+                        <li key={i.id}>
+                          <span>{i.source}{i.member ? ` · ${i.member}` : ""}</span>
+                          <span>{formatCurrency(i.amount)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
               </div>
             )}
