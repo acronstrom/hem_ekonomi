@@ -187,6 +187,22 @@ export default function Portal() {
     setCategories((prev) => prev.filter((c) => c.id !== id));
   }
 
+  async function deleteSection(sectionName) {
+    const res = await fetch(
+      `${API}/line-items?month=${month}&year=${year}&section=${encodeURIComponent(sectionName)}`,
+      { method: "DELETE", credentials: "include" }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Kunde inte ta bort sektion");
+    setLineItems((prev) => prev.filter((i) => i.section !== sectionName));
+    setCustomSectionNames((prev) => prev.filter((s) => s !== sectionName));
+    setSectionDisplayNames((prev) => {
+      const next = { ...prev };
+      delete next[sectionName];
+      return next;
+    });
+  }
+
   return (
     <div className="portal">
       <header className="portal-header">
@@ -288,6 +304,7 @@ export default function Portal() {
             onUpdate={updateLineItem}
             onDelete={deleteLineItem}
             onRenameSection={renameSection}
+            onDeleteSection={deleteSection}
           />
           </div>
         )}

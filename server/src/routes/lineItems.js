@@ -118,6 +118,35 @@ lineItemsRouter.patch(
   }
 );
 
+lineItemsRouter.delete(
+  "/",
+  [
+    query("month").isInt({ min: 1, max: 12 }).toInt(),
+    query("year").isInt({ min: 2000, max: 2100 }).toInt(),
+    query("section").trim().notEmpty().withMessage("Sektion krävs"),
+  ],
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      const { month, year, section } = req.query;
+      const result = await prisma.monthlyLineItem.deleteMany({
+        where: {
+          userId: req.user.id,
+          month: Number(month),
+          year: Number(year),
+          section: String(section).trim(),
+        },
+      });
+      res.json({ deleted: result.count });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 lineItemsRouter.delete("/:id", async (req, res, next) => {
   try {
     const existing = await prisma.monthlyLineItem.findFirst({

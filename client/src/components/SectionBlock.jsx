@@ -13,6 +13,7 @@ export default function SectionBlock({
   onUpdate,
   onDelete,
   onRenameSection,
+  onDeleteSection,
 }) {
   const name = displayName ?? section;
   const [adding, setAdding] = useState(false);
@@ -137,6 +138,22 @@ export default function SectionBlock({
                   aria-label="Ändra sektionsnamn"
                 >
                   Ändra
+                </button>
+              )}
+              {onDeleteSection && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm btn-danger sheet-header-delete-btn"
+                  onClick={() => {
+                    const msg = items.length > 0
+                      ? `Ta bort sektionen "${name}" och alla ${items.length} rad(er)?`
+                      : `Ta bort sektionen "${name}"?`;
+                    if (window.confirm(msg)) onDeleteSection(displayName);
+                  }}
+                  title="Ta bort sektion"
+                  aria-label="Ta bort sektion"
+                >
+                  Ta bort sektion
                 </button>
               )}
             </h3>
