@@ -765,6 +765,15 @@ a:hover {
 .sheet-header-delete-btn:hover {
   color: var(--error);
 }
+.sheet-header-clear-btn {
+  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
+}
+.sheet-header-clear-btn:hover {
+  color: var(--accent);
+}
 .sheet-section-header-edit {
   display: flex;
   align-items: center;

@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 
 export default function SectionBlock({
   section,
@@ -14,6 +15,7 @@ export default function SectionBlock({
   onDelete,
   onRenameSection,
   onDeleteSection,
+  onClearSection,
 }) {
   const name = displayName ?? section;
   const [adding, setAdding] = useState(false);
@@ -147,6 +149,21 @@ export default function SectionBlock({
                   aria-label="Ändra sektionsnamn"
                 >
                   Ändra
+                </button>
+              )}
+              {onClearSection && items.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm sheet-header-clear-btn"
+                  onClick={() => {
+                    const monthName = MONTHS[month - 1];
+                    const msg = `Rensa alla ${items.length} rad(er) i sektionen "${name}" för ${monthName} ${year}? Detta kan inte ångras.`;
+                    if (window.confirm(msg)) onClearSection(displayName);
+                  }}
+                  title="Rensa alla rader i sektionen"
+                  aria-label="Rensa sektion"
+                >
+                  Rensa sektion
                 </button>
               )}
               {onDeleteSection && (

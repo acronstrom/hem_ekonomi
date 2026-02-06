@@ -24,6 +24,7 @@ export default function MonthlySheet({
   onDelete,
   onRenameSection,
   onDeleteSection,
+  onClearSection,
 }) {
   const [showOtherSection, setShowOtherSection] = useState(false);
   const [otherSection, setOtherSection] = useState("");
@@ -130,6 +131,7 @@ export default function MonthlySheet({
             onDelete={onDelete}
             onRenameSection={onRenameSection}
             onDeleteSection={onDeleteSection}
+            onClearSection={onClearSection}
           />
         );
       })}
