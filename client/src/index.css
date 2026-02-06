@@ -1236,6 +1236,32 @@ a:hover {
 .sheet-add-row {
   margin: 0 1rem 0.75rem;
 }
+.sheet-amount-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-amount-filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.sheet-amount-filter-input {
+  width: 90px;
+  min-width: 0;
+}
+.sheet-amount-filter-sep {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.sheet-amount-filter-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
+}
 .sheet-grand-total {
   display: flex;
   justify-content: space-between;

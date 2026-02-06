@@ -35,9 +35,23 @@ export default function MonthlySheet({
   const [otherAmount, setOtherAmount] = useState("");
   const [otherIsCardSection, setOtherIsCardSection] = useState(false);
   const [otherError, setOtherError] = useState("");
+  const [amountFilterMin, setAmountFilterMin] = useState("");
+  const [amountFilterMax, setAmountFilterMax] = useState("");
+
+  const minVal = amountFilterMin === "" ? null : parseFloat(String(amountFilterMin).replace(",", "."));
+  const maxVal = amountFilterMax === "" ? null : parseFloat(String(amountFilterMax).replace(",", "."));
+  const filteredItems =
+    (minVal == null || !Number.isNaN(minVal)) && (maxVal == null || !Number.isNaN(maxVal))
+      ? items.filter((item) => {
+          const a = Number(item.amount);
+          if (minVal != null && !Number.isNaN(minVal) && a < minVal) return false;
+          if (maxVal != null && !Number.isNaN(maxVal) && a > maxVal) return false;
+          return true;
+        })
+      : items;
 
   const bySection = {};
-  items.forEach((item) => {
+  filteredItems.forEach((item) => {
     const s = item.section || "Övrigt";
     if (!bySection[s]) bySection[s] = [];
     bySection[s].push(item);
@@ -55,8 +69,9 @@ export default function MonthlySheet({
     .sort()
     .forEach((s) => sectionOrder.push(s));
 
-  const grandTotal = items.reduce((sum, i) => sum + Number(i.amount), 0);
+  const grandTotal = filteredItems.reduce((sum, i) => sum + Number(i.amount), 0);
   const monthName = MONTHS[month - 1];
+  const hasAmountFilter = (minVal != null && !Number.isNaN(minVal)) || (maxVal != null && !Number.isNaN(maxVal));
 
   async function handleAddOther(e) {
     e.preventDefault();
@@ -103,6 +118,48 @@ export default function MonthlySheet({
   return (
     <div className="monthly-sheet">
       {error && <div className="portal-error">{error}</div>}
+
+      {items.length > 0 && (
+        <div className="sheet-amount-filter">
+          <span className="sheet-amount-filter-label">Filtrera belopp:</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="sheet-input sheet-amount-filter-input"
+            placeholder="Min kr"
+            value={amountFilterMin}
+            onChange={(e) => setAmountFilterMin(e.target.value)}
+            title="Visa endast rader med belopp minst detta (lämna tomt för ingen gräns)"
+          />
+          <span className="sheet-amount-filter-sep">–</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="sheet-input sheet-amount-filter-input"
+            placeholder="Max kr"
+            value={amountFilterMax}
+            onChange={(e) => setAmountFilterMax(e.target.value)}
+            title="Visa endast rader med belopp högst detta (lämna tomt för ingen gräns)"
+          />
+          {hasAmountFilter && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                setAmountFilterMin("");
+                setAmountFilterMax("");
+              }}
+            >
+              Rensa filter
+            </button>
+          )}
+          {hasAmountFilter && (
+            <span className="sheet-amount-filter-hint">
+              Visar {filteredItems.length} av {items.length} poster
+            </span>
+          )}
+        </div>
+      )}
 
       {sectionOrder.map((section) => {
         const displayName = sectionDisplayNames[section] || section;
@@ -190,9 +247,9 @@ export default function MonthlySheet({
         </button>
       )}
 
-      {items.length > 0 && (
+      {filteredItems.length > 0 && (
         <div className="sheet-grand-total">
-          <span>Totalt {monthName} {year}</span>
+          <span>Totalt {monthName} {year}{hasAmountFilter ? " (filtrerat)" : ""}</span>
           <strong>{fmt(grandTotal)} kr</strong>
         </div>
       )}
