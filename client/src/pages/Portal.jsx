@@ -103,6 +103,7 @@ export default function Portal() {
           lineName: item.lineName,
           amount: Number(item.amount),
           category: item.category || undefined,
+          member: item.member || undefined,
         }),
       });
       const createData = await createRes.json().catch(() => ({}));

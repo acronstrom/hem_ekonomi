@@ -718,6 +718,11 @@ a:hover {
   font-size: 0.875rem;
   color: var(--text-muted);
 }
+.dashboard-member-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
 .dashboard-section-list {
   list-style: none;
   margin: 0 0 1rem;
@@ -1220,6 +1225,18 @@ a:hover {
 .sheet-th-category,
 .sheet-td-category {
   width: 140px;
+}
+.sheet-th-member,
+.sheet-td-member {
+  width: 100px;
+}
+.sheet-input-member {
+  min-width: 80px;
+  max-width: 110px;
+}
+.sheet-member-cell {
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 .sheet-category-cell {
   color: var(--text-muted);

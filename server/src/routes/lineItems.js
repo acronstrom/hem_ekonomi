@@ -30,6 +30,7 @@ lineItemsRouter.get(
         ...e,
         amount: Number(e.amount),
         category: e.category ?? null,
+        member: e.member ?? null,
       }));
 
       res.json({ items: serialized });
@@ -48,6 +49,7 @@ lineItemsRouter.post(
     body("lineName").trim().notEmpty().withMessage("Radnamn krävs"),
     body("amount").isFloat({ min: 0 }).withMessage("Belopp måste vara >= 0"),
     body("category").optional().trim(),
+    body("member").optional().trim(),
   ],
   async (req, res, next) => {
     try {
@@ -56,7 +58,8 @@ lineItemsRouter.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { month, year, section, lineName, amount, category } = req.body;
+      const { month, year, section, lineName, amount, category, member } = req.body;
+      const memberVal = member != null && String(member).trim() !== "" ? String(member).trim() : null;
       const item = await prisma.monthlyLineItem.create({
         data: {
           userId: req.user.id,
@@ -66,11 +69,12 @@ lineItemsRouter.post(
           lineName: String(lineName).trim(),
           amount: Number(amount),
           category: category ? String(category).trim() : null,
+          member: memberVal,
         },
       });
 
       res.status(201).json({
-        item: { ...item, amount: Number(item.amount) },
+        item: { ...item, amount: Number(item.amount), member: item.member ?? null },
       });
     } catch (err) {
       next(err);
@@ -85,6 +89,7 @@ lineItemsRouter.patch(
     body("lineName").optional().trim().notEmpty(),
     body("amount").optional().isFloat({ min: 0 }),
     body("category").optional().trim(),
+    body("member").optional().trim(),
   ],
   async (req, res, next) => {
     try {
@@ -105,13 +110,16 @@ lineItemsRouter.patch(
       if (req.body.lineName !== undefined) updates.lineName = req.body.lineName;
       if (req.body.amount !== undefined) updates.amount = req.body.amount;
       if (req.body.category !== undefined) updates.category = req.body.category ? String(req.body.category).trim() : null;
+      if (req.body.member !== undefined) {
+        updates.member = req.body.member != null && String(req.body.member).trim() !== "" ? String(req.body.member).trim() : null;
+      }
 
       const item = await prisma.monthlyLineItem.update({
         where: { id: req.params.id },
         data: updates,
       });
 
-      res.json({ item: { ...item, amount: Number(item.amount) } });
+      res.json({ item: { ...item, amount: Number(item.amount), member: item.member ?? null } });
     } catch (err) {
       next(err);
     }

@@ -70,6 +70,7 @@ model MonthlyLineItem {
   section   String
   lineName  String
   category  String?
+  member    String?  // Who paid / which card (e.g. "Andreas", "Anna")
   amount    Decimal  @db.Decimal(12, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
