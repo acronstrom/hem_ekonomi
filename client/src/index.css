@@ -1059,6 +1059,25 @@ a:hover {
 .sheet-csv-error {
   margin-top: 0.25rem;
 }
+.sheet-csv-category {
+  min-width: 120px;
+  margin-left: 0.25rem;
+}
+.sheet-th-date,
+.sheet-td-date {
+  width: 96px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+.sheet-line-name {
+  display: block;
+}
+.sheet-line-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
 .sheet-other-card-label {
   display: inline-flex;
   align-items: center;

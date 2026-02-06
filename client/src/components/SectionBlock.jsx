@@ -3,27 +3,63 @@ import { Fragment, useState, useRef } from "react";
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 
-// Bank export CSV: tab-separated, columns Datum för kontohändelse(0), Bokföringsdag(1), Rubrik(2), Belopp(3), ...
+function formatCardMetaTitle(meta) {
+  if (!meta || typeof meta !== "object") return "";
+  const parts = [];
+  if (meta.transactionDate) parts.push(`Datum: ${meta.transactionDate}`);
+  if (meta.bookingDate) parts.push(`Bokföringsdag: ${meta.bookingDate}`);
+  if (meta.currency) parts.push(`Valuta: ${meta.currency}`);
+  if (meta.transactionType) parts.push(`Typ: ${meta.transactionType}`);
+  if (meta.originalAmount != null) parts.push(`Ursprungligt belopp: ${meta.originalAmount}`);
+  if (meta.originalCurrency) parts.push(`Ursprunglig valuta: ${meta.originalCurrency}`);
+  if (meta.city) parts.push(`Stad: ${meta.city}`);
+  if (meta.country) parts.push(`Land: ${meta.country}`);
+  if (meta.exchangeRate != null) parts.push(`Växelkurs: ${meta.exchangeRate}`);
+  return parts.join("\n");
+}
+
+// Bank export CSV: semicolon-separated
+// Datum för kontohändelse(0);Bokföringsdag(1);Rubrik(2);Belopp(3);Valuta(4);Typ av transaktion(5);Ursprungligt belopp(6);Ursprunglig valuta(7);Stad(8);Land(9);Växelkurs(10)
 function parseBankCsv(text, filterMonth, filterYear) {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split("\t");
-    const dateStr = (cols[0] || "").trim();
+    const cols = lines[i].split(";").map((c) => c.trim());
+    const transactionDate = (cols[0] || "").trim();
+    const bookingDate = (cols[1] || "").trim();
     const rubrik = (cols[2] || "").trim();
     const beloppStr = (cols[3] || "0").trim().replace(",", ".");
+    const valuta = (cols[4] || "").trim();
+    const transactionType = (cols[5] || "").trim();
+    const originalAmount = (cols[6] || "").trim().replace(",", ".");
+    const originalCurrency = (cols[7] || "").trim();
+    const city = (cols[8] || "").trim();
+    const country = (cols[9] || "").trim();
+    const exchangeRate = (cols[10] || "").trim().replace(",", ".");
     if (!rubrik) continue;
     const amount = Math.abs(parseFloat(beloppStr));
     if (Number.isNaN(amount) || amount <= 0) continue;
     let year = filterYear;
     let month = filterMonth;
-    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const [y, m] = dateStr.split("-").map(Number);
+    if (transactionDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [y, m] = transactionDate.split("-").map(Number);
       year = y;
       month = m;
     }
-    if (month === filterMonth && year === filterYear) rows.push({ lineName: rubrik, amount });
+    if (month !== filterMonth || year !== filterYear) continue;
+    const meta = {
+      transactionDate: transactionDate || undefined,
+      bookingDate: bookingDate || undefined,
+      currency: valuta || undefined,
+      transactionType: transactionType || undefined,
+      originalAmount: originalAmount ? parseFloat(originalAmount) : undefined,
+      originalCurrency: originalCurrency || undefined,
+      city: city || undefined,
+      country: country || undefined,
+      exchangeRate: exchangeRate ? parseFloat(exchangeRate) : undefined,
+    };
+    rows.push({ lineName: rubrik, amount, meta: Object.fromEntries(Object.entries(meta).filter(([, v]) => v !== undefined && v !== "")) });
   }
   return rows;
 }
@@ -59,6 +95,7 @@ export default function SectionBlock({
   const [groupByCategory, setGroupByCategory] = useState(false);
   const [csvError, setCsvError] = useState("");
   const [csvUploading, setCsvUploading] = useState(false);
+  const [csvImportCategory, setCsvImportCategory] = useState("");
   const fileInputRef = useRef(null);
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.amount), 0);
@@ -137,10 +174,12 @@ export default function SectionBlock({
       const text = await file.text();
       const parsed = parseBankCsv(text, month, year);
       if (parsed.length === 0) {
-        setCsvError("Inga rader för denna månad i filen, eller ogiltigt format (tab-separerad: Datum, Rubrik, Belopp).");
+        setCsvError("Inga rader för denna månad i filen, eller ogiltigt format (semikolon-separerad: Datum;Rubrik;Belopp;…).");
         return;
       }
-      await onBulkAdd(name, parsed);
+      const category = csvImportCategory.trim() || undefined;
+      const items = parsed.map((r) => ({ ...r, category }));
+      await onBulkAdd(name, items);
     } catch (err) {
       setCsvError(err.message || "Kunde inte läsa filen");
     } finally {
@@ -198,12 +237,26 @@ export default function SectionBlock({
                     onChange={handleCsvFile}
                     aria-label="Ladda upp CSV"
                   />
+                  <select
+                    className="sheet-input sheet-select sheet-csv-category"
+                    value={csvImportCategory}
+                    onChange={(e) => setCsvImportCategory(e.target.value)}
+                    title="Kategori för importerade rader"
+                    aria-label="Kategori för import"
+                  >
+                    <option value="">Kategori (valfritt)</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm sheet-header-csv-btn"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={csvUploading}
-                    title="Importera utgifter från bankens CSV-export (tab-separerad: Datum, Rubrik, Belopp)"
+                    title="Importera från bankens CSV (semikolon: Datum;Rubrik;Belopp;Valuta;…)"
                   >
                     {csvUploading ? "Laddar upp…" : "Ladda upp CSV"}
                   </button>
@@ -284,6 +337,7 @@ export default function SectionBlock({
         <thead>
           <tr>
             <th>Benämning</th>
+            {isCardSection && <th className="sheet-th-date">Datum</th>}
             <th className="sheet-th-category">Kategori</th>
             <th className="sheet-th-amount">Belopp</th>
             <th className="sheet-th-actions" />
@@ -292,7 +346,7 @@ export default function SectionBlock({
         <tbody>
           {items.length === 0 && !adding && (
             <tr>
-              <td colSpan={4} className="sheet-empty-row">
+              <td colSpan={isCardSection ? 5 : 4} className="sheet-empty-row">
                 Inga rader. Klicka på &quot;Lägg till rad&quot; nedan.
               </td>
             </tr>
@@ -309,6 +363,7 @@ export default function SectionBlock({
                       placeholder="Benämning"
                     />
                   </td>
+                  {isCardSection && <td className="sheet-td-date">{item.meta?.transactionDate || "—"}</td>}
                   <td className="sheet-td-category">
                     <select
                       className="sheet-input sheet-select"
@@ -359,7 +414,19 @@ export default function SectionBlock({
                 </>
               ) : (
                 <>
-                  <td>{item.lineName}</td>
+                  <td>
+                    <span className="sheet-line-name">{item.lineName}</span>
+                    {isCardSection && item.meta && (item.meta.currency || item.meta.city) && (
+                      <span className="sheet-line-meta" title={formatCardMetaTitle(item.meta)}>
+                        {[item.meta.currency, item.meta.city].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </td>
+                  {isCardSection && (
+                    <td className="sheet-td-date" title={item.meta ? formatCardMetaTitle(item.meta) : undefined}>
+                      {item.meta?.transactionDate || "—"}
+                    </td>
+                  )}
                   <td className="sheet-td-category sheet-category-cell">{item.category || "—"}</td>
                   <td className="sheet-td-amount sheet-numeric">{fmt(item.amount)} kr</td>
                   <td className="sheet-td-actions">
@@ -395,7 +462,7 @@ export default function SectionBlock({
             return (
               <Fragment key={cat}>
                 <tr className="sheet-category-group-header">
-                  <td colSpan={4}>Kategori: {cat}</td>
+                  <td colSpan={isCardSection ? 5 : 4}>Kategori: {cat}</td>
                 </tr>
                 {groupItems.map((item) => (
                   <tr key={item.id} className="sheet-row">
@@ -409,6 +476,7 @@ export default function SectionBlock({
                             placeholder="Benämning"
                           />
                         </td>
+                        {isCardSection && <td className="sheet-td-date">{item.meta?.transactionDate || "—"}</td>}
                         <td className="sheet-td-category">
                           <select
                             className="sheet-input sheet-select"
@@ -453,7 +521,19 @@ export default function SectionBlock({
                       </>
                     ) : (
                       <>
-                        <td>{item.lineName}</td>
+                        <td>
+                          <span className="sheet-line-name">{item.lineName}</span>
+                          {isCardSection && item.meta && (item.meta.currency || item.meta.city) && (
+                            <span className="sheet-line-meta" title={formatCardMetaTitle(item.meta)}>
+                              {[item.meta.currency, item.meta.city].filter(Boolean).join(" · ")}
+                            </span>
+                          )}
+                        </td>
+                        {isCardSection && (
+                          <td className="sheet-td-date" title={item.meta ? formatCardMetaTitle(item.meta) : undefined}>
+                            {item.meta?.transactionDate || "—"}
+                          </td>
+                        )}
                         <td className="sheet-td-category sheet-category-cell">{item.category || "—"}</td>
                         <td className="sheet-td-amount sheet-numeric">{fmt(item.amount)} kr</td>
                         <td className="sheet-td-actions">
@@ -484,7 +564,7 @@ export default function SectionBlock({
                   </tr>
                 ))}
                 <tr className="sheet-category-group-subtotal">
-                  <td colSpan={2}>Summa {cat}</td>
+                  <td colSpan={isCardSection ? 3 : 2}>Summa {cat}</td>
                   <td className="sheet-td-amount sheet-numeric">{fmt(groupSum)} kr</td>
                   <td />
                 </tr>
@@ -493,7 +573,7 @@ export default function SectionBlock({
           })}
           {adding && (
             <tr className="sheet-row sheet-row-add">
-              <td colSpan={4}>
+              <td colSpan={isCardSection ? 5 : 4}>
                 {error && <div className="sheet-inline-error">{error}</div>}
                 <form onSubmit={handleAdd} className="sheet-add-form">
                   <input

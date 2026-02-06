@@ -31,6 +31,7 @@ lineItemsRouter.get(
         amount: Number(e.amount),
         category: e.category ?? null,
         member: e.member ?? null,
+        meta: e.meta ?? undefined,
       }));
 
       res.json({ items: serialized });
@@ -74,7 +75,7 @@ lineItemsRouter.post(
       });
 
       res.status(201).json({
-        item: { ...item, amount: Number(item.amount), member: item.member ?? null },
+        item: { ...item, amount: Number(item.amount), member: item.member ?? null, meta: item.meta ?? undefined },
       });
     } catch (err) {
       next(err);
@@ -119,7 +120,7 @@ lineItemsRouter.patch(
         data: updates,
       });
 
-      res.json({ item: { ...item, amount: Number(item.amount), member: item.member ?? null } });
+      res.json({ item: { ...item, amount: Number(item.amount), member: item.member ?? null, meta: item.meta ?? undefined } });
     } catch (err) {
       next(err);
     }
@@ -165,6 +166,7 @@ lineItemsRouter.post(
     body("items.*.lineName").trim().notEmpty().withMessage("Radnamn krävs"),
     body("items.*.amount").isFloat({ min: 0 }).withMessage("Belopp måste vara >= 0"),
     body("items.*.category").optional().trim(),
+    body("items.*.meta").optional().isObject(),
   ],
   async (req, res, next) => {
     try {
@@ -177,6 +179,7 @@ lineItemsRouter.post(
         const lineName = String(row.lineName).trim();
         const amount = Number(row.amount);
         const category = row.category != null && String(row.category).trim() !== "" ? String(row.category).trim() : null;
+        const meta = row.meta && typeof row.meta === "object" ? row.meta : undefined;
         const item = await prisma.monthlyLineItem.create({
           data: {
             userId: req.user.id,
@@ -186,9 +189,10 @@ lineItemsRouter.post(
             lineName,
             amount,
             category,
+            meta: meta ?? undefined,
           },
         });
-        created.push({ ...item, amount: Number(item.amount), category: item.category ?? null, member: item.member ?? null });
+        created.push({ ...item, amount: Number(item.amount), category: item.category ?? null, member: item.member ?? null, meta: item.meta ?? undefined });
       }
       res.status(201).json({ items: created });
     } catch (err) {
