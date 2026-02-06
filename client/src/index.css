@@ -1043,6 +1043,33 @@ a:hover {
 .sheet-header-edit-btn:hover {
   color: var(--accent);
 }
+.sheet-csv-input-hidden {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.sheet-header-csv-btn {
+  font-weight: 400;
+  font-size: 0.8125rem;
+  margin-left: 0.25rem;
+}
+.sheet-csv-error {
+  margin-top: 0.25rem;
+}
+.sheet-other-card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sheet-other-card-label input {
+  margin: 0;
+}
 .sheet-header-delete-btn {
   font-weight: 400;
   font-size: 0.8125rem;

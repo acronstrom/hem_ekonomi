@@ -155,6 +155,48 @@ lineItemsRouter.delete(
   }
 );
 
+lineItemsRouter.post(
+  "/bulk",
+  [
+    body("month").isInt({ min: 1, max: 12 }).toInt(),
+    body("year").isInt({ min: 2000, max: 2100 }).toInt(),
+    body("section").trim().notEmpty().withMessage("Sektion krävs"),
+    body("items").isArray().withMessage("items måste vara en array"),
+    body("items.*.lineName").trim().notEmpty().withMessage("Radnamn krävs"),
+    body("items.*.amount").isFloat({ min: 0 }).withMessage("Belopp måste vara >= 0"),
+    body("items.*.category").optional().trim(),
+  ],
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+      const { month, year, section, items } = req.body;
+      const sectionStr = String(section).trim();
+      const created = [];
+      for (const row of items) {
+        const lineName = String(row.lineName).trim();
+        const amount = Number(row.amount);
+        const category = row.category != null && String(row.category).trim() !== "" ? String(row.category).trim() : null;
+        const item = await prisma.monthlyLineItem.create({
+          data: {
+            userId: req.user.id,
+            month: Number(month),
+            year: Number(year),
+            section: sectionStr,
+            lineName,
+            amount,
+            category,
+          },
+        });
+        created.push({ ...item, amount: Number(item.amount), category: item.category ?? null, member: item.member ?? null });
+      }
+      res.status(201).json({ items: created });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 lineItemsRouter.delete("/:id", async (req, res, next) => {
   try {
     const existing = await prisma.monthlyLineItem.findFirst({

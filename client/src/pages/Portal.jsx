@@ -21,6 +21,7 @@ export default function Portal() {
   const [view, setView] = useState("dashboard");
   const [sectionDisplayNames, setSectionDisplayNames] = useState({});
   const [customSectionNames, setCustomSectionNames] = useState([]);
+  const [cardSectionNames, setCardSectionNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -37,8 +38,20 @@ export default function Portal() {
     }
   }
 
+  async function loadCardSections() {
+    try {
+      const res = await fetch(`${API}/card-sections`, { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCardSectionNames(data.sectionNames || []);
+    } catch {
+      setCardSectionNames([]);
+    }
+  }
+
   useEffect(() => {
     loadCategories();
+    loadCardSections();
   }, []);
 
   async function loadLineItems() {
@@ -77,6 +90,29 @@ export default function Portal() {
       throw new Error(msg);
     }
     if (data.item) setLineItems((prev) => [...prev, data.item]);
+  }
+
+  async function addCardSection(sectionName) {
+    const res = await fetch(`${API}/card-sections`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ sectionName: sectionName.trim() }),
+    });
+    if (!res.ok) throw new Error("Kunde inte spara kortsektion");
+    setCardSectionNames((prev) => (prev.includes(sectionName.trim()) ? prev : [...prev, sectionName.trim()].sort()));
+  }
+
+  async function bulkAddLineItems(section, items) {
+    const res = await fetch(`${API}/line-items/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ month, year, section, items }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.errors?.[0]?.msg ?? data.error ?? "Kunde inte importera");
+    if (data.items?.length) setLineItems((prev) => [...prev, ...data.items]);
   }
 
   async function copyFromMonth(sourceMonth, sourceYear) {
@@ -322,7 +358,10 @@ export default function Portal() {
             categories={categories}
             sectionDisplayNames={sectionDisplayNames}
             customSectionNames={customSectionNames}
+            cardSectionNames={cardSectionNames}
             onAddCustomSection={(name) => setCustomSectionNames((prev) => (prev.includes(name) ? prev : [...prev, name].sort()))}
+            onAddCardSection={addCardSection}
+            onBulkAdd={bulkAddLineItems}
             loading={loading}
             error={error}
             onAdd={addLineItem}

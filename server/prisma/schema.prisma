@@ -8,17 +8,29 @@ datasource db {
 }
 
 model User {
-  id        String         @id @default(cuid())
-  email     String         @unique
-  password  String
-  name      String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  expenses  MonthlyExpense[]
-  lineItems MonthlyLineItem[]
-  categories UserCategory[]
-  income    MonthlyIncome[]
-  budgets   MonthlyBudget[]
+  id           String            @id @default(cuid())
+  email        String            @unique
+  password     String
+  name         String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  expenses     MonthlyExpense[]
+  lineItems    MonthlyLineItem[]
+  categories   UserCategory[]
+  income       MonthlyIncome[]
+  budgets      MonthlyBudget[]
+  cardSections UserCardSection[]
+}
+
+model UserCardSection {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sectionName String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, sectionName])
+  @@index([userId])
 }
 
 model MonthlyIncome {

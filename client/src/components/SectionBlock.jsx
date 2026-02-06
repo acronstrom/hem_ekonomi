@@ -1,7 +1,32 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useRef } from "react";
 
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
+
+// Bank export CSV: tab-separated, columns Datum för kontohändelse(0), Bokföringsdag(1), Rubrik(2), Belopp(3), ...
+function parseBankCsv(text, filterMonth, filterYear) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split("\t");
+    const dateStr = (cols[0] || "").trim();
+    const rubrik = (cols[2] || "").trim();
+    const beloppStr = (cols[3] || "0").trim().replace(",", ".");
+    if (!rubrik) continue;
+    const amount = Math.abs(parseFloat(beloppStr));
+    if (Number.isNaN(amount) || amount <= 0) continue;
+    let year = filterYear;
+    let month = filterMonth;
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [y, m] = dateStr.split("-").map(Number);
+      year = y;
+      month = m;
+    }
+    if (month === filterMonth && year === filterYear) rows.push({ lineName: rubrik, amount });
+  }
+  return rows;
+}
 
 export default function SectionBlock({
   section,
@@ -10,6 +35,8 @@ export default function SectionBlock({
   month,
   year,
   categories = [],
+  isCardSection = false,
+  onBulkAdd,
   onAdd,
   onUpdate,
   onDelete,
@@ -30,6 +57,9 @@ export default function SectionBlock({
   const [editCategory, setEditCategory] = useState("");
   const [error, setError] = useState("");
   const [groupByCategory, setGroupByCategory] = useState(false);
+  const [csvError, setCsvError] = useState("");
+  const [csvUploading, setCsvUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.amount), 0);
 
@@ -97,6 +127,27 @@ export default function SectionBlock({
     }
   }
 
+  async function handleCsvFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !onBulkAdd) return;
+    setCsvError("");
+    setCsvUploading(true);
+    try {
+      const text = await file.text();
+      const parsed = parseBankCsv(text, month, year);
+      if (parsed.length === 0) {
+        setCsvError("Inga rader för denna månad i filen, eller ogiltigt format (tab-separerad: Datum, Rubrik, Belopp).");
+        return;
+      }
+      await onBulkAdd(name, parsed);
+    } catch (err) {
+      setCsvError(err.message || "Kunde inte läsa filen");
+    } finally {
+      setCsvUploading(false);
+    }
+  }
+
   return (
     <div className="sheet-section">
       <div className="sheet-section-header">
@@ -137,6 +188,27 @@ export default function SectionBlock({
           <>
             <h3 className="sheet-section-title">
               {name}
+              {isCardSection && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,text/csv,text/plain"
+                    className="sheet-csv-input-hidden"
+                    onChange={handleCsvFile}
+                    aria-label="Ladda upp CSV"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm sheet-header-csv-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={csvUploading}
+                    title="Importera utgifter från bankens CSV-export (tab-separerad: Datum, Rubrik, Belopp)"
+                  >
+                    {csvUploading ? "Laddar upp…" : "Ladda upp CSV"}
+                  </button>
+                </>
+              )}
               {onRenameSection && (
                 <button
                   type="button"
@@ -189,6 +261,7 @@ export default function SectionBlock({
           </>
         )}
       </div>
+      {csvError && <div className="sheet-inline-error sheet-csv-error">{csvError}</div>}
       {!editingHeader && items.length > 0 && (
         <div className="sheet-section-view-toggle">
           <button

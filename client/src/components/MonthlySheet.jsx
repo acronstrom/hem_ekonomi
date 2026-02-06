@@ -16,7 +16,10 @@ export default function MonthlySheet({
   categories = [],
   sectionDisplayNames = {},
   customSectionNames = [],
+  cardSectionNames = [],
   onAddCustomSection,
+  onAddCardSection,
+  onBulkAdd,
   loading,
   error,
   onAdd,
@@ -30,6 +33,7 @@ export default function MonthlySheet({
   const [otherSection, setOtherSection] = useState("");
   const [otherLineName, setOtherLineName] = useState("");
   const [otherAmount, setOtherAmount] = useState("");
+  const [otherIsCardSection, setOtherIsCardSection] = useState(false);
   const [otherError, setOtherError] = useState("");
 
   const bySection = {};
@@ -81,27 +85,31 @@ export default function MonthlySheet({
         setOtherError("Ange benämning och belopp för att lägga till en rad.");
         return;
       }
+      if (otherIsCardSection && onAddCardSection) await onAddCardSection(sectionName);
       setOtherSection("");
       setOtherLineName("");
       setOtherAmount("");
+      setOtherIsCardSection(false);
       setShowOtherSection(false);
     } catch (err) {
       setOtherError(err.message || "Kunde inte lägga till");
     }
   }
 
-  function handleAddEmptySection() {
+  async function handleAddEmptySection() {
     setOtherError("");
     const sectionName = otherSection.trim();
     if (!sectionName) {
       setOtherError("Ange sektionsnamn");
       return;
     }
-if (onAddCustomSection) {
+    if (onAddCustomSection) {
         onAddCustomSection(sectionName);
+        if (otherIsCardSection && onAddCardSection) await onAddCardSection(sectionName);
         setOtherSection("");
         setOtherLineName("");
         setOtherAmount("");
+        setOtherIsCardSection(false);
         setShowOtherSection(false);
       }
   }
@@ -126,6 +134,8 @@ if (onAddCustomSection) {
             month={month}
             year={year}
             categories={categories}
+            isCardSection={cardSectionNames.includes(displayName)}
+            onBulkAdd={onBulkAdd}
             onAdd={(payload) => onAdd({ ...payload, section: displayName, month, year })}
             onUpdate={onUpdate}
             onDelete={onDelete}
@@ -165,6 +175,14 @@ if (onAddCustomSection) {
               onChange={(e) => setOtherAmount(e.target.value)}
               placeholder="Belopp"
             />
+            <label className="sheet-other-card-label">
+              <input
+                type="checkbox"
+                checked={otherIsCardSection}
+                onChange={(e) => setOtherIsCardSection(e.target.checked)}
+              />
+              Kortsektion (CSV-import)
+            </label>
             <button type="submit" className="btn btn-primary btn-sm">
               {otherLineName.trim() && otherAmount ? "Lägg till rad" : "Skapa tom sektion"}
             </button>
