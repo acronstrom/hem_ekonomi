@@ -30,7 +30,6 @@ export default function MonthlySheet({
   const [otherSection, setOtherSection] = useState("");
   const [otherLineName, setOtherLineName] = useState("");
   const [otherAmount, setOtherAmount] = useState("");
-  const [otherMember, setOtherMember] = useState("");
   const [otherError, setOtherError] = useState("");
 
   const bySection = {};
@@ -75,7 +74,6 @@ export default function MonthlySheet({
           section: sectionName,
           lineName: otherLineName.trim(),
           amount: num,
-          member: otherMember.trim() || undefined,
         });
       } else if (onAddCustomSection) {
         onAddCustomSection(sectionName);
@@ -86,7 +84,6 @@ export default function MonthlySheet({
       setOtherSection("");
       setOtherLineName("");
       setOtherAmount("");
-      setOtherMember("");
       setShowOtherSection(false);
     } catch (err) {
       setOtherError(err.message || "Kunde inte lägga till");
@@ -105,7 +102,6 @@ if (onAddCustomSection) {
         setOtherSection("");
         setOtherLineName("");
         setOtherAmount("");
-        setOtherMember("");
         setShowOtherSection(false);
       }
   }
@@ -159,12 +155,6 @@ if (onAddCustomSection) {
               value={otherLineName}
               onChange={(e) => setOtherLineName(e.target.value)}
               placeholder="Benämning (valfritt för tom sektion)"
-            />
-            <input
-              className="sheet-input"
-              value={otherMember}
-              onChange={(e) => setOtherMember(e.target.value)}
-              placeholder="Kort/medlem (valfritt)"
             />
             <input
               type="number"

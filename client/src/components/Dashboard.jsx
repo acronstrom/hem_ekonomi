@@ -137,19 +137,17 @@ export default function Dashboard({
     byCategory[c] += Number(item.amount);
   });
 
-  const byMember = {};
-  thisMonthItems.forEach((item) => {
-    const m = (item.member && String(item.member).trim()) || "—";
-    if (!byMember[m]) byMember[m] = 0;
-    byMember[m] += Number(item.amount);
-  });
+  // Family members from income – "Per kort/medlem" shows sections with those names
+  const knownMemberNames = [...new Set(incomeItems.map((i) => i.member).filter(Boolean))];
+  const memberList = knownMemberNames
+    .map((m) => [m, bySection[m] ?? 0])
+    .sort((a, b) => b[1] - a[1]);
+  const memberPieData = memberList.filter(([, amount]) => amount > 0).map(([name, amount]) => ({ name, value: amount }));
 
   const sectionList = Object.entries(bySection).sort((a, b) => b[1] - a[1]);
   const categoryList = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
-  const memberList = Object.entries(byMember).sort((a, b) => b[1] - a[1]);
   const pieData = sectionList.map(([name, amount]) => ({ name, value: amount }));
   const categoryPieData = categoryList.map(([name, amount]) => ({ name, value: amount }));
-  const memberPieData = memberList.map(([name, amount]) => ({ name, value: amount }));
 
   const bySectionWithCategories = {};
   thisMonthItems.forEach((item) => {
@@ -520,7 +518,12 @@ export default function Dashboard({
               )}
               {expenseView === "member" && (
                 <>
-                  <p className="dashboard-member-desc">Summa per person/kort (utgifter registrerade med &quot;Kort/medlem&quot;).</p>
+                  <p className="dashboard-member-desc">
+                    Skapa en sektion per person i månadsöversikten (samma namn som vid inkomst, t.ex. Andreas, Anna). Här visas summan per sådan sektion.
+                  </p>
+                  {knownMemberNames.length === 0 && (
+                    <p className="dashboard-empty dashboard-member-empty">Lägg till inkomst med medlemsnamn (Inkomst-kortet) så dyker personerna upp här. Skapa sedan motsvarande sektioner i månadsöversikten.</p>
+                  )}
                   <ul className="dashboard-section-list">
                     {memberList.map(([name, amount]) => (
                       <li key={name} className="dashboard-section-row">

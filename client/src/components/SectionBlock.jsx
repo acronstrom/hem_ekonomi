@@ -25,11 +25,9 @@ export default function SectionBlock({
   const [lineName, setLineName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [member, setMember] = useState("");
   const [editName, setEditName] = useState("");
   const [editAmount, setEditAmount] = useState("");
   const [editCategory, setEditCategory] = useState("");
-  const [editMember, setEditMember] = useState("");
   const [error, setError] = useState("");
   const [groupByCategory, setGroupByCategory] = useState(false);
 
@@ -61,12 +59,10 @@ export default function SectionBlock({
         lineName: lineName.trim(),
         amount: num,
         category: category.trim() || undefined,
-        member: member.trim() || undefined,
       });
       setLineName("");
       setAmount("");
       setCategory("");
-      setMember("");
       setAdding(false);
     } catch (err) {
       setError(err.message);
@@ -216,7 +212,6 @@ export default function SectionBlock({
           <tr>
             <th>Benämning</th>
             <th className="sheet-th-category">Kategori</th>
-            <th className="sheet-th-member">Kort/Medlem</th>
             <th className="sheet-th-amount">Belopp</th>
             <th className="sheet-th-actions" />
           </tr>
@@ -224,7 +219,7 @@ export default function SectionBlock({
         <tbody>
           {items.length === 0 && !adding && (
             <tr>
-              <td colSpan={5} className="sheet-empty-row">
+              <td colSpan={4} className="sheet-empty-row">
                 Inga rader. Klicka på &quot;Lägg till rad&quot; nedan.
               </td>
             </tr>
@@ -255,14 +250,6 @@ export default function SectionBlock({
                       ))}
                     </select>
                   </td>
-                  <td className="sheet-td-member">
-                    <input
-                      className="sheet-input sheet-input-member"
-                      value={editMember}
-                      onChange={(e) => setEditMember(e.target.value)}
-                      placeholder="—"
-                    />
-                  </td>
                   <td className="sheet-td-amount">
                     <input
                       type="number"
@@ -290,7 +277,6 @@ export default function SectionBlock({
                           lineName: editName.trim(),
                           amount: parseFloat(editAmount) || 0,
                           category: editCategory.trim() || null,
-                          member: editMember.trim() || null,
                         })
                       }
                     >
@@ -302,7 +288,6 @@ export default function SectionBlock({
                 <>
                   <td>{item.lineName}</td>
                   <td className="sheet-td-category sheet-category-cell">{item.category || "—"}</td>
-                  <td className="sheet-td-member sheet-member-cell">{item.member || "—"}</td>
                   <td className="sheet-td-amount sheet-numeric">{fmt(item.amount)} kr</td>
                   <td className="sheet-td-actions">
                     <button
@@ -313,7 +298,6 @@ export default function SectionBlock({
                         setEditName(item.lineName);
                         setEditAmount(String(item.amount));
                         setEditCategory(item.category || "");
-                        setEditMember(item.member || "");
                       }}
                     >
                       Redigera
@@ -338,7 +322,7 @@ export default function SectionBlock({
             return (
               <Fragment key={cat}>
                 <tr className="sheet-category-group-header">
-                  <td colSpan={5}>Kategori: {cat}</td>
+                  <td colSpan={4}>Kategori: {cat}</td>
                 </tr>
                 {groupItems.map((item) => (
                   <tr key={item.id} className="sheet-row">
@@ -366,14 +350,6 @@ export default function SectionBlock({
                             ))}
                           </select>
                         </td>
-                        <td className="sheet-td-member">
-                          <input
-                            className="sheet-input sheet-input-member"
-                            value={editMember}
-                            onChange={(e) => setEditMember(e.target.value)}
-                            placeholder="—"
-                          />
-                        </td>
                         <td className="sheet-td-amount">
                           <input
                             type="number"
@@ -395,7 +371,6 @@ export default function SectionBlock({
                                 lineName: editName.trim(),
                                 amount: parseFloat(editAmount) || 0,
                                 category: editCategory.trim() || null,
-                                member: editMember.trim() || null,
                               })
                             }
                           >
@@ -407,7 +382,6 @@ export default function SectionBlock({
                       <>
                         <td>{item.lineName}</td>
                         <td className="sheet-td-category sheet-category-cell">{item.category || "—"}</td>
-                        <td className="sheet-td-member sheet-member-cell">{item.member || "—"}</td>
                         <td className="sheet-td-amount sheet-numeric">{fmt(item.amount)} kr</td>
                         <td className="sheet-td-actions">
                           <button
@@ -418,7 +392,6 @@ export default function SectionBlock({
                               setEditName(item.lineName);
                               setEditAmount(String(item.amount));
                               setEditCategory(item.category || "");
-                              setEditMember(item.member || "");
                             }}
                           >
                             Redigera
@@ -438,7 +411,7 @@ export default function SectionBlock({
                   </tr>
                 ))}
                 <tr className="sheet-category-group-subtotal">
-                  <td colSpan={3}>Summa {cat}</td>
+                  <td colSpan={2}>Summa {cat}</td>
                   <td className="sheet-td-amount sheet-numeric">{fmt(groupSum)} kr</td>
                   <td />
                 </tr>
@@ -447,7 +420,7 @@ export default function SectionBlock({
           })}
           {adding && (
             <tr className="sheet-row sheet-row-add">
-              <td colSpan={5}>
+              <td colSpan={4}>
                 {error && <div className="sheet-inline-error">{error}</div>}
                 <form onSubmit={handleAdd} className="sheet-add-form">
                   <input
@@ -470,13 +443,6 @@ export default function SectionBlock({
                     ))}
                   </select>
                   <input
-                    className="sheet-input sheet-input-member"
-                    value={member}
-                    onChange={(e) => setMember(e.target.value)}
-                    placeholder="Kort/medlem (valfritt)"
-                    title="Vem betalade (t.ex. Andreas, Anna)"
-                  />
-                  <input
                     type="number"
                     step="1"
                     min="0"
@@ -496,7 +462,6 @@ export default function SectionBlock({
                       setLineName("");
                       setAmount("");
                       setCategory("");
-                      setMember("");
                       setError("");
                     }}
                   >

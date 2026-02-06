@@ -1226,18 +1226,6 @@ a:hover {
 .sheet-td-category {
   width: 140px;
 }
-.sheet-th-member,
-.sheet-td-member {
-  width: 100px;
-}
-.sheet-input-member {
-  min-width: 80px;
-  max-width: 110px;
-}
-.sheet-member-cell {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
 .sheet-category-cell {
   color: var(--text-muted);
   font-size: 0.875rem;
