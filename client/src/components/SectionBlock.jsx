@@ -18,36 +18,36 @@ function formatCardMetaTitle(meta) {
   return parts.join("\n");
 }
 
-// Bank export CSV: semicolon-separated
-// Datum för kontohändelse(0);Bokföringsdag(1);Rubrik(2);Belopp(3);Valuta(4);Typ av transaktion(5);Ursprungligt belopp(6);Ursprunglig valuta(7);Stad(8);Land(9);Växelkurs(10)
+// Bank export CSV: semicolon- or tab-separated, fields may be quoted (e.g. Nordea)
+// Columns: Datum för kontohändelse(0), Bokföringsdag(1), Rubrik(2), Belopp(3), Valuta(4), ...
+function unquote(s) {
+  if (typeof s !== "string") return "";
+  return s.trim().replace(/^"|"$/g, "");
+}
 function parseBankCsv(text, filterMonth, filterYear) {
+  text = text.replace(/^\uFEFF/, ""); // BOM
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
+  const delimiter = lines[1].includes(";") ? ";" : "\t";
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(";").map((c) => c.trim());
-    const transactionDate = (cols[0] || "").trim();
-    const bookingDate = (cols[1] || "").trim();
-    const rubrik = (cols[2] || "").trim();
-    const beloppStr = (cols[3] || "0").trim().replace(",", ".");
-    const valuta = (cols[4] || "").trim();
-    const transactionType = (cols[5] || "").trim();
-    const originalAmount = (cols[6] || "").trim().replace(",", ".");
-    const originalCurrency = (cols[7] || "").trim();
-    const city = (cols[8] || "").trim();
-    const country = (cols[9] || "").trim();
-    const exchangeRate = (cols[10] || "").trim().replace(",", ".");
+    const raw = lines[i].split(delimiter);
+    const cols = raw.map((c) => unquote(c));
+    if (cols.length < 4) continue;
+    const transactionDate = cols[0] || "";
+    const bookingDate = cols[1] || "";
+    const rubrik = cols[2] || "";
+    const beloppStr = (cols[3] || "0").replace(/\s/g, "").replace(",", ".");
+    const valuta = cols[4] || "";
+    const transactionType = cols[5] || "";
+    const originalAmount = (cols[6] || "").replace(/\s/g, "").replace(",", ".");
+    const originalCurrency = cols[7] || "";
+    const city = (cols[8] || "").replace(/^""$/, "");
+    const country = (cols[9] || "").replace(/^""$/, "");
+    const exchangeRate = (cols[10] || "").replace(",", ".");
     if (!rubrik) continue;
     const amount = Math.abs(parseFloat(beloppStr));
     if (Number.isNaN(amount) || amount <= 0) continue;
-    let year = filterYear;
-    let month = filterMonth;
-    if (transactionDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const [y, m] = transactionDate.split("-").map(Number);
-      year = y;
-      month = m;
-    }
-    if (month !== filterMonth || year !== filterYear) continue;
     const meta = {
       transactionDate: transactionDate || undefined,
       bookingDate: bookingDate || undefined,
@@ -174,7 +174,7 @@ export default function SectionBlock({
       const text = await file.text();
       const parsed = parseBankCsv(text, month, year);
       if (parsed.length === 0) {
-        setCsvError("Inga rader för denna månad i filen, eller ogiltigt format (semikolon-separerad: Datum;Rubrik;Belopp;…).");
+        setCsvError("Inga giltiga rader hittades. Kontrollera att filen har minst 4 kolumner (Datum, Bokföringsdag, Rubrik, Belopp) separerade med semikolon (;) eller tabb.");
         return;
       }
       const category = csvImportCategory.trim() || undefined;
