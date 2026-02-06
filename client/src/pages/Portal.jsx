@@ -5,6 +5,7 @@ import MonthlySheet from "../components/MonthlySheet";
 import Dashboard from "../components/Dashboard";
 import CategoryManager from "../components/CategoryManager";
 import CopyFromMonth from "../components/CopyFromMonth";
+import AddUserModal from "../components/AddUserModal";
 import ThemeToggle from "../components/ThemeToggle";
 import { API_BASE } from "../api";
 
@@ -16,6 +17,7 @@ export default function Portal() {
   const [categories, setCategories] = useState([]);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showCopyFromMonth, setShowCopyFromMonth] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
   const [view, setView] = useState("dashboard");
   const [sectionDisplayNames, setSectionDisplayNames] = useState({});
   const [customSectionNames, setCustomSectionNames] = useState([]);
@@ -256,6 +258,9 @@ export default function Portal() {
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowCopyFromMonth(true)}>
               Kopiera från annan månad
             </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowAddUser(true)}>
+              Lägg till användare
+            </button>
           </div>
         </nav>
 
@@ -300,6 +305,13 @@ export default function Portal() {
             onAdd={addCategory}
             onRename={renameCategory}
             onDelete={deleteCategory}
+          />
+        )}
+
+        {showAddUser && (
+          <AddUserModal
+            apiBase={API_BASE}
+            onClose={() => setShowAddUser(false)}
           />
         )}
 

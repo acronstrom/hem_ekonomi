@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 const MONTHS = [
   "Januari", "Februari", "Mars", "April", "Maj", "Juni",
@@ -523,7 +523,10 @@ export default function Dashboard({
 
       {expandedCard && (
         <div className="dashboard-expanded-overlay" onClick={() => setExpandedCard(null)} role="dialog" aria-modal="true" aria-label="Expanderad vy">
-          <div className="dashboard-expanded-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`dashboard-expanded-content ${expandedCard === "by-section" || expandedCard === "recent" ? "dashboard-expanded-content--charts" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button type="button" className="dashboard-expanded-close" onClick={() => setExpandedCard(null)} aria-label="Stäng">
               ×
             </button>
@@ -583,50 +586,65 @@ export default function Dashboard({
               </div>
             )}
             {expandedCard === "by-section" && (
-              <div className="dashboard-expanded-section">
-                <h3>{expenseView === "section" ? "Utgifter per sektion" : "Utgifter per kategori"}</h3>
-                <div className="dashboard-expanded-section-inner">
+              <div className="dashboard-expanded-section dashboard-expanded-charts-view">
+                <h3>{expenseView === "section" ? "Utgifter per sektion" : "Utgifter per kategori"} · {MONTHS[currentMonth - 1]} {currentYear}</h3>
+                <p className="dashboard-expanded-total">Totalt {formatCurrency(thisTotal)}</p>
+                <div className="dashboard-expanded-charts-grid">
                   {expenseView === "section" && (
                     <>
-                      <ul className="dashboard-section-list dashboard-expanded-list-lg">
-                        {sectionList.map(([name, amount]) => (
-                          <li key={name} className="dashboard-section-row">
-                            <span className="dashboard-section-name">{name}</span>
-                            <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
-                          </li>
-                        ))}
+                      <ul className="dashboard-expanded-detail-list">
+                        {sectionList.map(([name, amount]) => {
+                          const pct = thisTotal > 0 ? ((amount / thisTotal) * 100).toFixed(1) : "0";
+                          return (
+                            <li key={name} className="dashboard-expanded-detail-row">
+                              <span className="dashboard-expanded-detail-name">{name}</span>
+                              <span className="dashboard-expanded-detail-amount">{formatCurrency(amount)}</span>
+                              <span className="dashboard-expanded-detail-pct">{pct}%</span>
+                            </li>
+                          );
+                        })}
                       </ul>
                       {pieData.length > 0 && (
-                        <ResponsiveContainer width="100%" height={320}>
-                          <PieChart>
-                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                              {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                            </Pie>
-                            <Tooltip formatter={(v) => formatCurrency(v)} />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <div className="dashboard-expanded-chart-main">
+                          <ResponsiveContainer width="100%" height={380}>
+                            <PieChart>
+                              <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius={140} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ strokeWidth: 1 }}>
+                                {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                              </Pie>
+                              <Tooltip formatter={(v) => formatCurrency(v)} />
+                              <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 16 }} formatter={(value, entry) => `${value} (${formatCurrency(entry.payload.value)})`} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       )}
                     </>
                   )}
                   {expenseView === "category" && (
                     <>
-                      <ul className="dashboard-section-list dashboard-expanded-list-lg">
-                        {categoryList.map(([name, amount]) => (
-                          <li key={name} className="dashboard-section-row">
-                            <span className="dashboard-section-name">{name}</span>
-                            <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
-                          </li>
-                        ))}
+                      <ul className="dashboard-expanded-detail-list">
+                        {categoryList.map(([name, amount]) => {
+                          const pct = thisTotal > 0 ? ((amount / thisTotal) * 100).toFixed(1) : "0";
+                          return (
+                            <li key={name} className="dashboard-expanded-detail-row">
+                              <span className="dashboard-expanded-detail-name">{name}</span>
+                              <span className="dashboard-expanded-detail-amount">{formatCurrency(amount)}</span>
+                              <span className="dashboard-expanded-detail-pct">{pct}%</span>
+                            </li>
+                          );
+                        })}
                       </ul>
                       {categoryPieData.length > 0 && (
-                        <ResponsiveContainer width="100%" height={320}>
-                          <PieChart>
-                            <Pie data={categoryPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                              {categoryPieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                            </Pie>
-                            <Tooltip formatter={(v) => formatCurrency(v)} />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <div className="dashboard-expanded-chart-main">
+                          <ResponsiveContainer width="100%" height={380}>
+                            <PieChart>
+                              <Pie data={categoryPieData} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius={140} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ strokeWidth: 1 }}>
+                                {categoryPieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                              </Pie>
+                              <Tooltip formatter={(v) => formatCurrency(v)} />
+                              <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 16 }} formatter={(value, entry) => `${value} (${formatCurrency(entry.payload.value)})`} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       )}
                     </>
                   )}
@@ -634,18 +652,23 @@ export default function Dashboard({
               </div>
             )}
             {expandedCard === "recent" && (
-              <div className="dashboard-expanded-section">
+              <div className="dashboard-expanded-section dashboard-expanded-charts-view">
                 <h3>Senaste månaderna</h3>
+                <p className="dashboard-expanded-total">
+                  Summa 6 månader: {formatCurrency(recentMonths.reduce((s, m) => s + m.total, 0))}
+                </p>
                 <div className="dashboard-expanded-section-inner">
                   {barData.length > 0 && (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={barData} margin={{ top: 16, right: 16, left: 16, bottom: 16 }}>
-                        <XAxis dataKey="month" tick={{ fontSize: 13 }} />
-                        <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(v) => [formatCurrency(v), "Totalt"]} />
-                        <Bar dataKey="total" fill={CHART_COLORS[0]} name="Totalt" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div className="dashboard-expanded-chart-main dashboard-expanded-bar-wrap">
+                      <ResponsiveContainer width="100%" height={400}>
+                        <BarChart data={barData} margin={{ top: 24, right: 24, left: 24, bottom: 24 }}>
+                          <XAxis dataKey="month" tick={{ fontSize: 14 }} />
+                          <YAxis tick={{ fontSize: 14 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)} k`} />
+                          <Tooltip formatter={(v) => [formatCurrency(v), "Totalt"]} contentStyle={{ fontSize: 14 }} />
+                          <Bar dataKey="total" fill={CHART_COLORS[0]} name="Totalt" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   )}
                   <table className="dashboard-recent-table dashboard-expanded-table">
                     <thead>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 
@@ -62,7 +62,7 @@ export default function Login() {
           </button>
         </form>
         <p className="auth-footer">
-          Har du inget konto? <Link to="/register">Registrera dig</Link>
+          Har du inget konto? Be en befintlig användare att lägga till dig.
         </p>
       </div>
     </div>

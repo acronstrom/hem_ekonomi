@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Portal from "./pages/Portal";
 
 function ProtectedRoute({ children }) {
@@ -46,14 +45,7 @@ export default function App() {
           </PublicOnlyRoute>
         }
       />
-      <Route
-        path="/register"
-        element={
-          <PublicOnlyRoute>
-            <Register />
-          </PublicOnlyRoute>
-        }
-      />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route
         path="/"
         element={
