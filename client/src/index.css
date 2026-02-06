@@ -368,6 +368,130 @@ a:hover {
 .dashboard-card-loans {
   border-left: 3px solid var(--accent);
 }
+.dashboard-card-expandable {
+  position: relative;
+}
+.dashboard-card-expand-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+.dashboard-card-expand-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  opacity: 1;
+}
+.dashboard-card-expand-btn::before {
+  content: "⤢";
+}
+.dashboard-section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dashboard-expanded-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+.dashboard-expanded-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+.dashboard-expanded-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dashboard-expanded-close:hover {
+  background: var(--border);
+  color: var(--text);
+}
+.dashboard-expanded-card h3,
+.dashboard-expanded-section h3 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+.dashboard-expanded-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 0.5rem;
+}
+.dashboard-expanded-meta {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem;
+}
+.dashboard-expanded-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.dashboard-expanded-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-expanded-section-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.dashboard-expanded-list-lg {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.dashboard-expanded-table {
+  font-size: 1rem;
+}
+.dashboard-expanded-table th,
+.dashboard-expanded-table td {
+  padding: 0.75rem 1rem;
+}
 .dashboard-card-income {
   min-width: 0;
 }

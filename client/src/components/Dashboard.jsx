@@ -35,6 +35,7 @@ export default function Dashboard({
   const [error, setError] = useState("");
   const [expenseView, setExpenseView] = useState("section");
   const [showSectionCharts, setShowSectionCharts] = useState(false);
+  const [expandedCard, setExpandedCard] = useState(null);
 
   const API = `${apiBase}/api`;
 
@@ -241,14 +242,16 @@ export default function Dashboard({
       {error && <div className="portal-error">{error}</div>}
 
       <div className="dashboard-hero">
-        <div className="dashboard-card dashboard-card-total">
+        <div className="dashboard-card dashboard-card-total dashboard-card-expandable">
+          <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("total")} title="Visa större" aria-label="Expandera" />
           <span className="dashboard-card-label">Totalt denna månad</span>
           <span className="dashboard-card-value">{formatCurrency(thisTotal)}</span>
           <span className="dashboard-card-meta">
             {MONTHS[currentMonth - 1]} {currentYear}
           </span>
         </div>
-        <div className="dashboard-card dashboard-card-compare">
+        <div className="dashboard-card dashboard-card-compare dashboard-card-expandable">
+          <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("compare")} title="Visa större" aria-label="Expandera" />
           <span className="dashboard-card-label">Jämfört med förra månaden</span>
           <span className={`dashboard-card-value dashboard-diff ${diff >= 0 ? "positive" : "negative"}`}>
             {diff >= 0 ? "+" : ""}{formatCurrency(diff)}
@@ -258,13 +261,15 @@ export default function Dashboard({
           </span>
         </div>
         {loanTotal > 0 && (
-          <div className="dashboard-card dashboard-card-loans">
+          <div className="dashboard-card dashboard-card-loans dashboard-card-expandable">
+            <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("loans")} title="Visa större" aria-label="Expandera" />
             <span className="dashboard-card-label">Lån & avbetalningar</span>
             <span className="dashboard-card-value">{formatCurrency(loanTotal)}</span>
             <span className="dashboard-card-meta">Denna månad</span>
           </div>
         )}
-        <div className="dashboard-card dashboard-card-income">
+        <div className="dashboard-card dashboard-card-income dashboard-card-expandable">
+          <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("income")} title="Visa större" aria-label="Expandera" />
           <span className="dashboard-card-label">Inkomst</span>
           <span className="dashboard-card-value">{formatCurrency(incomeTotal)}</span>
           <span className="dashboard-card-meta">Denna månad</span>
@@ -289,7 +294,8 @@ export default function Dashboard({
             </button>
           </form>
         </div>
-        <div className="dashboard-card dashboard-card-savings">
+        <div className="dashboard-card dashboard-card-savings dashboard-card-expandable">
+          <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("savings")} title="Visa större" aria-label="Expandera" />
           <span className="dashboard-card-label">Sparande / överskott</span>
           <span className={`dashboard-card-value ${savings >= 0 ? "positive" : "negative"}`}>
             {formatCurrency(savings)}
@@ -297,7 +303,8 @@ export default function Dashboard({
           <span className="dashboard-card-meta">Inkomst − utgifter</span>
         </div>
         {budgetAmount != null ? (
-          <div className="dashboard-card dashboard-card-budget">
+          <div className="dashboard-card dashboard-card-budget dashboard-card-expandable">
+            <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("budget")} title="Visa större" aria-label="Expandera" />
             <span className="dashboard-card-label">Budget</span>
             <span className="dashboard-card-value">{formatCurrency(budgetAmount)}</span>
             <span className="dashboard-card-meta">
@@ -326,12 +333,13 @@ export default function Dashboard({
       </div>
 
       <div className="dashboard-grid">
-        <section className="dashboard-section dashboard-by-section">
+        <section className="dashboard-section dashboard-by-section dashboard-section-expandable">
           <div className="dashboard-section-header-row">
             <h3>
               {expenseView === "section" ? "Utgifter per sektion" : "Utgifter per kategori"}
             </h3>
-            <div className="dashboard-view-toggles">
+            <div className="dashboard-section-header-actions">
+              <div className="dashboard-view-toggles">
               <button
                 type="button"
                 className={`btn btn-ghost btn-sm ${expenseView === "section" ? "active" : ""}`}
@@ -345,6 +353,10 @@ export default function Dashboard({
                 onClick={() => setExpenseView("category")}
               >
                 Per kategori
+              </button>
+            </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpandedCard("by-section")} title="Visa större">
+                Expandera
               </button>
             </div>
           </div>
@@ -466,8 +478,13 @@ export default function Dashboard({
           </button>
         </section>
 
-        <section className="dashboard-section dashboard-recent">
-          <h3>Senaste månaderna</h3>
+        <section className="dashboard-section dashboard-recent dashboard-section-expandable">
+          <div className="dashboard-section-header-row">
+            <h3>Senaste månaderna</h3>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpandedCard("recent")} title="Visa större">
+              Expandera
+            </button>
+          </div>
           {barData.length > 0 && (
             <div className="dashboard-chart-wrap">
               <ResponsiveContainer width="100%" height={220}>
@@ -503,6 +520,155 @@ export default function Dashboard({
           </button>
         </section>
       </div>
+
+      {expandedCard && (
+        <div className="dashboard-expanded-overlay" onClick={() => setExpandedCard(null)} role="dialog" aria-modal="true" aria-label="Expanderad vy">
+          <div className="dashboard-expanded-content" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="dashboard-expanded-close" onClick={() => setExpandedCard(null)} aria-label="Stäng">
+              ×
+            </button>
+            {expandedCard === "total" && (
+              <div className="dashboard-expanded-card">
+                <h3>Totalt denna månad</h3>
+                <p className="dashboard-expanded-value">{formatCurrency(thisTotal)}</p>
+                <p className="dashboard-expanded-meta">{MONTHS[currentMonth - 1]} {currentYear}</p>
+              </div>
+            )}
+            {expandedCard === "compare" && (
+              <div className="dashboard-expanded-card">
+                <h3>Jämfört med förra månaden</h3>
+                <p className={`dashboard-expanded-value ${diff >= 0 ? "positive" : "negative"}`}>
+                  {diff >= 0 ? "+" : ""}{formatCurrency(diff)}
+                </p>
+                <p className="dashboard-expanded-meta">Förra månaden: {formatCurrency(prevTotal)}</p>
+              </div>
+            )}
+            {expandedCard === "loans" && (
+              <div className="dashboard-expanded-card">
+                <h3>Lån & avbetalningar</h3>
+                <p className="dashboard-expanded-value">{formatCurrency(loanTotal)}</p>
+                <p className="dashboard-expanded-meta">Denna månad</p>
+              </div>
+            )}
+            {expandedCard === "income" && (
+              <div className="dashboard-expanded-card">
+                <h3>Inkomst</h3>
+                <p className="dashboard-expanded-value">{formatCurrency(incomeTotal)}</p>
+                <p className="dashboard-expanded-meta">Denna månad</p>
+                {incomeItems.length > 0 && (
+                  <ul className="dashboard-expanded-list">
+                    {incomeItems.map((i) => (
+                      <li key={i.id}><span>{i.source}</span><span>{formatCurrency(i.amount)}</span></li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {expandedCard === "savings" && (
+              <div className="dashboard-expanded-card">
+                <h3>Sparande / överskott</h3>
+                <p className={`dashboard-expanded-value ${savings >= 0 ? "positive" : "negative"}`}>{formatCurrency(savings)}</p>
+                <p className="dashboard-expanded-meta">Inkomst − utgifter</p>
+                <p className="dashboard-expanded-meta">Inkomst: {formatCurrency(incomeTotal)} · Utgifter: {formatCurrency(thisTotal)}</p>
+              </div>
+            )}
+            {expandedCard === "budget" && (
+              <div className="dashboard-expanded-card">
+                <h3>Budget</h3>
+                <p className="dashboard-expanded-value">{formatCurrency(budgetAmount)}</p>
+                <p className="dashboard-expanded-meta">
+                  Utgifter: {formatCurrency(thisTotal)}
+                  {budgetRemaining >= 0 ? ` · Kvar: ${formatCurrency(budgetRemaining)}` : ` · Överskriden med ${formatCurrency(-budgetRemaining)}`}
+                </p>
+              </div>
+            )}
+            {expandedCard === "by-section" && (
+              <div className="dashboard-expanded-section">
+                <h3>{expenseView === "section" ? "Utgifter per sektion" : "Utgifter per kategori"}</h3>
+                <div className="dashboard-expanded-section-inner">
+                  {expenseView === "section" && (
+                    <>
+                      <ul className="dashboard-section-list dashboard-expanded-list-lg">
+                        {sectionList.map(([name, amount]) => (
+                          <li key={name} className="dashboard-section-row">
+                            <span className="dashboard-section-name">{name}</span>
+                            <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {pieData.length > 0 && (
+                        <ResponsiveContainer width="100%" height={320}>
+                          <PieChart>
+                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                              {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip formatter={(v) => formatCurrency(v)} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
+                    </>
+                  )}
+                  {expenseView === "category" && (
+                    <>
+                      <ul className="dashboard-section-list dashboard-expanded-list-lg">
+                        {categoryList.map(([name, amount]) => (
+                          <li key={name} className="dashboard-section-row">
+                            <span className="dashboard-section-name">{name}</span>
+                            <span className="dashboard-section-amount">{formatCurrency(amount)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {categoryPieData.length > 0 && (
+                        <ResponsiveContainer width="100%" height={320}>
+                          <PieChart>
+                            <Pie data={categoryPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                              {categoryPieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip formatter={(v) => formatCurrency(v)} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            {expandedCard === "recent" && (
+              <div className="dashboard-expanded-section">
+                <h3>Senaste månaderna</h3>
+                <div className="dashboard-expanded-section-inner">
+                  {barData.length > 0 && (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={barData} margin={{ top: 16, right: 16, left: 16, bottom: 16 }}>
+                        <XAxis dataKey="month" tick={{ fontSize: 13 }} />
+                        <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                        <Tooltip formatter={(v) => [formatCurrency(v), "Totalt"]} />
+                        <Bar dataKey="total" fill={CHART_COLORS[0]} name="Totalt" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                  <table className="dashboard-recent-table dashboard-expanded-table">
+                    <thead>
+                      <tr>
+                        <th>Månad</th>
+                        <th className="dashboard-th-amount">Totalt</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentMonths.map(({ month, year, total }) => (
+                        <tr key={`${year}-${month}`}>
+                          <td>{MONTHS[month - 1]} {year}</td>
+                          <td className="dashboard-td-amount">{formatCurrency(total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
