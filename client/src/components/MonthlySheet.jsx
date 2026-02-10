@@ -9,6 +9,15 @@ const MONTHS = [
 
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
+function isUtlagg(item) {
+  const c = (item.category && item.category.trim()) || "";
+  const s = (item.section && item.section.trim()) || "";
+  return c === "Utlägg" && s.toLowerCase().includes("kreditkort");
+}
+function itemAmount(item) {
+  return isUtlagg(item) ? -Number(item.amount) : Number(item.amount);
+}
+
 export default function MonthlySheet({
   items,
   month,
@@ -69,7 +78,7 @@ export default function MonthlySheet({
     .sort()
     .forEach((s) => sectionOrder.push(s));
 
-  const grandTotal = filteredItems.reduce((sum, i) => sum + Number(i.amount), 0);
+  const grandTotal = filteredItems.reduce((sum, i) => sum + itemAmount(i), 0);
   const monthName = MONTHS[month - 1];
   const hasAmountFilter = (minVal != null && !Number.isNaN(minVal)) || (maxVal != null && !Number.isNaN(maxVal));
 

@@ -3,6 +3,15 @@ import { Fragment, useState, useRef } from "react";
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
 
+function isUtlagg(item) {
+  const c = (item.category && item.category.trim()) || "";
+  const s = (item.section && item.section.trim()) || "";
+  return c === "Utlägg" && s.toLowerCase().includes("kreditkort");
+}
+function itemAmount(item) {
+  return isUtlagg(item) ? -Number(item.amount) : Number(item.amount);
+}
+
 function formatCardMetaTitle(meta) {
   if (!meta || typeof meta !== "object") return "";
   const parts = [];
@@ -99,7 +108,7 @@ export default function SectionBlock({
   const [csvImportCategory, setCsvImportCategory] = useState("");
   const fileInputRef = useRef(null);
 
-  const subtotal = items.reduce((sum, i) => sum + Number(i.amount), 0);
+  const subtotal = items.reduce((sum, i) => sum + itemAmount(i), 0);
 
   const byCategory = items.reduce((acc, item) => {
     const cat = item.category?.trim() || "—";
@@ -459,7 +468,7 @@ export default function SectionBlock({
           ))}
           {items.length > 0 && groupByCategory && categoryOrder.map((cat) => {
             const groupItems = byCategory[cat];
-            const groupSum = groupItems.reduce((s, i) => s + Number(i.amount), 0);
+            const groupSum = groupItems.reduce((s, i) => s + itemAmount(i), 0);
             return (
               <Fragment key={cat}>
                 <tr className="sheet-category-group-header">

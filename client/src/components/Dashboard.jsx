@@ -14,6 +14,15 @@ function formatCurrency(n) {
   return Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " kr";
 }
 
+function isUtlagg(item) {
+  const c = (item.category && item.category.trim()) || "";
+  const s = (item.section && item.section.trim()) || "";
+  return c === "Utlägg" && s.toLowerCase().includes("kreditkort");
+}
+function itemAmount(item) {
+  return isUtlagg(item) ? -Number(item.amount) : Number(item.amount);
+}
+
 export default function Dashboard({
   apiBase,
   currentMonth,
@@ -91,7 +100,7 @@ export default function Dashboard({
         setRecentMonths(
           monthsToFetch.map(({ month, year }, i) => {
             const items = recentRes[i]?.items || [];
-            const total = items.reduce((sum, it) => sum + Number(it.amount), 0);
+            const total = items.reduce((sum, it) => sum + itemAmount(it), 0);
             return { month, year, total, items };
           })
         );
@@ -106,8 +115,8 @@ export default function Dashboard({
     return () => { cancelled = true; };
   }, [API, currentMonth, currentYear]);
 
-  const thisTotal = thisMonthItems.reduce((sum, i) => sum + Number(i.amount), 0);
-  const prevTotal = prevMonthItems.reduce((sum, i) => sum + Number(i.amount), 0);
+  const thisTotal = thisMonthItems.reduce((sum, i) => sum + itemAmount(i), 0);
+  const prevTotal = prevMonthItems.reduce((sum, i) => sum + itemAmount(i), 0);
   const diff = thisTotal - prevTotal;
   const incomeTotal = incomeItems.reduce((sum, i) => sum + Number(i.amount), 0);
   const savings = incomeTotal - thisTotal;
@@ -127,12 +136,12 @@ export default function Dashboard({
   thisMonthItems.forEach((item) => {
     const s = item.section || "Övrigt";
     if (!bySection[s]) bySection[s] = 0;
-    bySection[s] += Number(item.amount);
+    bySection[s] += itemAmount(item);
   });
 
   const loanTotal = thisMonthItems
     .filter((i) => LOAN_SECTION_MATCH.test(i.section || ""))
-    .reduce((sum, i) => sum + Number(i.amount), 0);
+    .reduce((sum, i) => sum + itemAmount(i), 0);
 
   const byCategory = {};
   thisMonthItems.forEach((item) => {
@@ -150,8 +159,8 @@ export default function Dashboard({
 
   const sectionList = Object.entries(bySection).sort((a, b) => b[1] - a[1]);
   const categoryList = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
-  const pieData = sectionList.map(([name, amount]) => ({ name, value: amount }));
-  const categoryPieData = categoryList.map(([name, amount]) => ({ name, value: amount }));
+  const pieData = sectionList.filter(([, amount]) => amount > 0).map(([name, amount]) => ({ name, value: amount }));
+  const categoryPieData = categoryList.filter(([, amount]) => amount > 0).map(([name, amount]) => ({ name, value: amount }));
 
   const bySectionWithCategories = {};
   thisMonthItems.forEach((item) => {
@@ -159,7 +168,7 @@ export default function Dashboard({
     if (!bySectionWithCategories[s]) bySectionWithCategories[s] = {};
     const c = (item.category && item.category.trim()) || "—";
     if (!bySectionWithCategories[s][c]) bySectionWithCategories[s][c] = 0;
-    bySectionWithCategories[s][c] += Number(item.amount);
+    bySectionWithCategories[s][c] += itemAmount(item);
   });
   const sectionChartData = Object.entries(bySectionWithCategories).map(([section, cats]) => ({
     section,
