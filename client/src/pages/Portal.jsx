@@ -15,6 +15,7 @@ export default function Portal() {
   const { user, logout } = useAuth();
   const [lineItems, setLineItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoryRules, setCategoryRules] = useState([]);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showCopyFromMonth, setShowCopyFromMonth] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
@@ -49,9 +50,46 @@ export default function Portal() {
     }
   }
 
+  async function loadCategoryRules() {
+    try {
+      const res = await fetch(`${API}/category-rules`, { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCategoryRules(data.rules || []);
+    } catch {
+      setCategoryRules([]);
+    }
+  }
+
+  async function saveCategoryRule(lineName, amount, category) {
+    if (!lineName || !category.trim()) return;
+    try {
+      const res = await fetch(`${API}/category-rules`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          lineName: String(lineName).trim(),
+          amount: Number(amount),
+          category: String(category).trim(),
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.rule) setCategoryRules((prev) => {
+        const key = (r) => `${r.lineNameNormalized}-${r.amount}`;
+        const next = prev.filter((r) => key(r) !== key(data.rule));
+        return [...next, data.rule];
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   useEffect(() => {
     loadCategories();
     loadCardSections();
+    loadCategoryRules();
   }, []);
 
   async function loadLineItems() {
@@ -89,7 +127,12 @@ export default function Portal() {
       const msg = data.errors?.[0]?.msg ?? data.error ?? "Kunde inte spara";
       throw new Error(msg);
     }
-    if (data.item) setLineItems((prev) => [...prev, data.item]);
+    if (data.item) {
+      setLineItems((prev) => [...prev, data.item]);
+      if (payload.category && payload.category.trim()) {
+        saveCategoryRule(payload.lineName, payload.amount, payload.category);
+      }
+    }
   }
 
   async function addCardSection(sectionName) {
@@ -163,6 +206,9 @@ export default function Portal() {
     setLineItems((prev) =>
       prev.map((e) => (e.id === id ? data.item : e))
     );
+    if (data.item && data.item.category && data.item.category.trim()) {
+      saveCategoryRule(data.item.lineName, data.item.amount, data.item.category);
+    }
   }
 
   async function deleteLineItem(id) {
@@ -356,6 +402,7 @@ export default function Portal() {
             month={month}
             year={year}
             categories={categories}
+            categoryRules={categoryRules}
             sectionDisplayNames={sectionDisplayNames}
             customSectionNames={customSectionNames}
             cardSectionNames={cardSectionNames}

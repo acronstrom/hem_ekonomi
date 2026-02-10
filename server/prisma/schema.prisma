@@ -8,18 +8,34 @@ datasource db {
 }
 
 model User {
-  id           String            @id @default(cuid())
-  email        String            @unique
-  password     String
-  name         String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  expenses     MonthlyExpense[]
-  lineItems    MonthlyLineItem[]
-  categories   UserCategory[]
-  income       MonthlyIncome[]
-  budgets      MonthlyBudget[]
-  cardSections UserCardSection[]
+  id             String            @id @default(cuid())
+  email          String            @unique
+  password       String
+  name           String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  expenses       MonthlyExpense[]
+  lineItems      MonthlyLineItem[]
+  categories     UserCategory[]
+  income         MonthlyIncome[]
+  budgets        MonthlyBudget[]
+  cardSections   UserCardSection[]
+  categoryRules  CategoryRule[]
+}
+
+model CategoryRule {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lineName         String   // store/benämning as entered
+  lineNameNormalized String // lowercase trim for matching
+  amount           Decimal  @db.Decimal(12, 2)
+  categoryName     String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, lineNameNormalized, amount])
+  @@index([userId])
 }
 
 model UserCardSection {

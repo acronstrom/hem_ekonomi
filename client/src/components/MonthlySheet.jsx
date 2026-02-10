@@ -23,6 +23,7 @@ export default function MonthlySheet({
   month,
   year,
   categories = [],
+  categoryRules = [],
   sectionDisplayNames = {},
   customSectionNames = [],
   cardSectionNames = [],
@@ -183,6 +184,7 @@ export default function MonthlySheet({
             month={month}
             year={year}
             categories={categories}
+            categoryRules={categoryRules}
             isCardSection={cardSectionNames.includes(displayName)}
             onBulkAdd={onBulkAdd}
             onAdd={(payload) => onAdd({ ...payload, section: displayName, month, year })}

@@ -10,6 +10,7 @@ import { categoriesRouter } from "./routes/categories.js";
 import { incomeRouter } from "./routes/income.js";
 import { budgetRouter } from "./routes/budget.js";
 import { cardSectionsRouter } from "./routes/cardSections.js";
+import { categoryRulesRouter } from "./routes/categoryRules.js";
 import { authMiddleware } from "./middleware/auth.js";
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/categories", authMiddleware, categoriesRouter);
 app.use("/api/income", authMiddleware, incomeRouter);
 app.use("/api/budget", authMiddleware, budgetRouter);
 app.use("/api/card-sections", authMiddleware, cardSectionsRouter);
+app.use("/api/category-rules", authMiddleware, categoryRulesRouter);
 
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 

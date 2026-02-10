@@ -1,4 +1,4 @@
-import { Fragment, useState, useRef, useMemo } from "react";
+import { Fragment, useState, useRef, useMemo, useEffect } from "react";
 
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
@@ -81,6 +81,7 @@ export default function SectionBlock({
   month,
   year,
   categories = [],
+  categoryRules = [],
   isCardSection = false,
   onBulkAdd,
   onAdd,
@@ -109,6 +110,22 @@ export default function SectionBlock({
   const fileInputRef = useRef(null);
   const [sortBy, setSortBy] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
+
+  function lookupCategory(lineName, amount) {
+    const normalized = (lineName != null ? String(lineName).trim() : "").toLowerCase();
+    const amt = Number(amount);
+    if (Number.isNaN(amt)) return null;
+    const rule = categoryRules.find(
+      (r) => r.lineNameNormalized === normalized && r.amount === amt
+    );
+    return rule ? rule.categoryName : null;
+  }
+
+  useEffect(() => {
+    if (!adding) return;
+    const suggested = lookupCategory(lineName, amount);
+    if (suggested != null && !category.trim()) setCategory(suggested);
+  }, [lineName, amount, adding, categoryRules, category]);
 
   const subtotalNet = items.reduce((sum, i) => sum + itemAmount(i), 0);
   const subtotalGross = items.reduce((sum, i) => sum + Number(i.amount), 0);
@@ -260,8 +277,11 @@ export default function SectionBlock({
         setCsvError("Inga giltiga rader hittades. Kontrollera att filen har minst 4 kolumner (Datum, Bokföringsdag, Rubrik, Belopp) separerade med semikolon (;) eller tabb.");
         return;
       }
-      const category = csvImportCategory.trim() || undefined;
-      const items = parsed.map((r) => ({ ...r, category }));
+      const defaultCategory = csvImportCategory.trim() || undefined;
+      const items = parsed.map((r) => ({
+        ...r,
+        category: lookupCategory(r.lineName, r.amount) || defaultCategory,
+      }));
       await onBulkAdd(name, items);
     } catch (err) {
       setCsvError(err.message || "Kunde inte läsa filen");
