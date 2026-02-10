@@ -78,7 +78,8 @@ export default function MonthlySheet({
     .sort()
     .forEach((s) => sectionOrder.push(s));
 
-  const grandTotal = filteredItems.reduce((sum, i) => sum + itemAmount(i), 0);
+  const grandTotalNet = filteredItems.reduce((sum, i) => sum + itemAmount(i), 0);
+  const grandTotalGross = filteredItems.reduce((sum, i) => sum + Number(i.amount), 0);
   const monthName = MONTHS[month - 1];
   const hasAmountFilter = (minVal != null && !Number.isNaN(minVal)) || (maxVal != null && !Number.isNaN(maxVal));
 
@@ -259,7 +260,9 @@ export default function MonthlySheet({
       {filteredItems.length > 0 && (
         <div className="sheet-grand-total">
           <span>Totalt {monthName} {year}{hasAmountFilter ? " (filtrerat)" : ""}</span>
-          <strong>{fmt(grandTotal)} kr</strong>
+          <span className="sheet-grand-total-values">
+            <strong>{fmt(grandTotalGross)} kr</strong> (exkl. Utlägg: <strong>{fmt(grandTotalNet)} kr</strong>)
+          </span>
         </div>
       )}
     </div>

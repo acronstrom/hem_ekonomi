@@ -1,4 +1,4 @@
-import { Fragment, useState, useRef } from "react";
+import { Fragment, useState, useRef, useMemo } from "react";
 
 const fmt = (n) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const MONTHS = ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"];
@@ -107,8 +107,11 @@ export default function SectionBlock({
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvImportCategory, setCsvImportCategory] = useState("");
   const fileInputRef = useRef(null);
+  const [sortBy, setSortBy] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
 
-  const subtotal = items.reduce((sum, i) => sum + itemAmount(i), 0);
+  const subtotalNet = items.reduce((sum, i) => sum + itemAmount(i), 0);
+  const subtotalGross = items.reduce((sum, i) => sum + Number(i.amount), 0);
 
   const byCategory = items.reduce((acc, item) => {
     const cat = item.category?.trim() || "—";
@@ -117,6 +120,76 @@ export default function SectionBlock({
     return acc;
   }, {});
   const categoryOrder = Object.keys(byCategory).sort((a, b) => (a === "—" ? 1 : b === "—" ? -1 : a.localeCompare(b)));
+
+  const sortedItems = useMemo(() => {
+    if (!sortBy) return items;
+    const dir = sortDir === "asc" ? 1 : -1;
+    const compare = (a, b) => {
+      let va, vb;
+      switch (sortBy) {
+        case "lineName":
+          va = (a.lineName || "").trim().toLowerCase();
+          vb = (b.lineName || "").trim().toLowerCase();
+          return va.localeCompare(vb, "sv");
+        case "date":
+          va = a.meta?.transactionDate || "";
+          vb = b.meta?.transactionDate || "";
+          return va.localeCompare(vb);
+        case "category":
+          va = (a.category || "—").trim().toLowerCase();
+          vb = (b.category || "—").trim().toLowerCase();
+          return va.localeCompare(vb, "sv");
+        case "amount":
+          va = Number(a.amount) || 0;
+          vb = Number(b.amount) || 0;
+          return va - vb;
+        default:
+          return 0;
+      }
+    };
+    return [...items].sort((a, b) => dir * compare(a, b));
+  }, [items, sortBy, sortDir]);
+
+  const sortedByCategory = useMemo(() => {
+    if (!sortBy) return byCategory;
+    const dir = sortDir === "asc" ? 1 : -1;
+    const compare = (a, b) => {
+      let va, vb;
+      switch (sortBy) {
+        case "lineName":
+          va = (a.lineName || "").trim().toLowerCase();
+          vb = (b.lineName || "").trim().toLowerCase();
+          return va.localeCompare(vb, "sv");
+        case "date":
+          va = a.meta?.transactionDate || "";
+          vb = b.meta?.transactionDate || "";
+          return va.localeCompare(vb);
+        case "category":
+          va = (a.category || "—").trim().toLowerCase();
+          vb = (b.category || "—").trim().toLowerCase();
+          return va.localeCompare(vb, "sv");
+        case "amount":
+          va = Number(a.amount) || 0;
+          vb = Number(b.amount) || 0;
+          return va - vb;
+        default:
+          return 0;
+      }
+    };
+    const out = {};
+    Object.keys(byCategory).forEach((cat) => {
+      out[cat] = [...byCategory[cat]].sort((a, b) => dir * compare(a, b));
+    });
+    return out;
+  }, [byCategory, sortBy, sortDir]);
+
+  function handleSort(col) {
+    if (sortBy === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  }
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -319,7 +392,7 @@ export default function SectionBlock({
               )}
             </h3>
             <span className="sheet-section-subtotal">
-              {fmt(subtotal)} kr
+              {fmt(subtotalGross)} kr / exkl. Utlägg: {fmt(subtotalNet)} kr
             </span>
           </>
         )}
@@ -346,10 +419,28 @@ export default function SectionBlock({
       <table className="sheet-table">
         <thead>
           <tr>
-            <th>Benämning</th>
-            {isCardSection && <th className="sheet-th-date">Datum</th>}
-            <th className="sheet-th-category">Kategori</th>
-            <th className="sheet-th-amount">Belopp</th>
+            <th className="sheet-th-sortable">
+              <button type="button" className="sheet-th-sort-btn" onClick={() => handleSort("lineName")} title="Sortera på benämning">
+                Benämning {sortBy === "lineName" && (sortDir === "asc" ? " ↑" : " ↓")}
+              </button>
+            </th>
+            {isCardSection && (
+              <th className="sheet-th-date sheet-th-sortable">
+                <button type="button" className="sheet-th-sort-btn" onClick={() => handleSort("date")} title="Sortera på datum">
+                  Datum {sortBy === "date" && (sortDir === "asc" ? " ↑" : " ↓")}
+                </button>
+              </th>
+            )}
+            <th className="sheet-th-category sheet-th-sortable">
+              <button type="button" className="sheet-th-sort-btn" onClick={() => handleSort("category")} title="Sortera på kategori">
+                Kategori {sortBy === "category" && (sortDir === "asc" ? " ↑" : " ↓")}
+              </button>
+            </th>
+            <th className="sheet-th-amount sheet-th-sortable">
+              <button type="button" className="sheet-th-sort-btn" onClick={() => handleSort("amount")} title="Sortera på belopp">
+                Belopp {sortBy === "amount" && (sortDir === "asc" ? " ↑" : " ↓")}
+              </button>
+            </th>
             <th className="sheet-th-actions" />
           </tr>
         </thead>
@@ -361,7 +452,7 @@ export default function SectionBlock({
               </td>
             </tr>
           )}
-          {items.length > 0 && !groupByCategory && items.map((item) => (
+          {items.length > 0 && !groupByCategory && sortedItems.map((item) => (
             <tr key={item.id} className="sheet-row">
               {editingId === item.id ? (
                 <>
@@ -467,7 +558,7 @@ export default function SectionBlock({
             </tr>
           ))}
           {items.length > 0 && groupByCategory && categoryOrder.map((cat) => {
-            const groupItems = byCategory[cat];
+            const groupItems = sortedByCategory[cat];
             const groupSum = groupItems.reduce((s, i) => s + itemAmount(i), 0);
             return (
               <Fragment key={cat}>
@@ -638,7 +729,9 @@ export default function SectionBlock({
       </table>
       <div className="sheet-section-total">
         <strong>Summa {name}</strong>
-        <strong>{fmt(subtotal)} kr</strong>
+        <span className="sheet-section-total-values">
+          <strong>{fmt(subtotalGross)} kr</strong> (exkl. Utlägg: <strong>{fmt(subtotalNet)} kr</strong>)
+        </span>
       </div>
       {!adding && (
         <button

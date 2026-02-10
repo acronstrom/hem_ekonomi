@@ -116,6 +116,7 @@ export default function Dashboard({
   }, [API, currentMonth, currentYear]);
 
   const thisTotal = thisMonthItems.reduce((sum, i) => sum + itemAmount(i), 0);
+  const thisTotalGross = thisMonthItems.reduce((sum, i) => sum + Number(i.amount), 0);
   const prevTotal = prevMonthItems.reduce((sum, i) => sum + itemAmount(i), 0);
   const diff = thisTotal - prevTotal;
   const incomeTotal = incomeItems.reduce((sum, i) => sum + Number(i.amount), 0);
@@ -307,7 +308,9 @@ export default function Dashboard({
         <div className="dashboard-card dashboard-card-total dashboard-card-expandable">
           <button type="button" className="dashboard-card-expand-btn" onClick={() => setExpandedCard("total")} title="Visa större" aria-label="Expandera" />
           <span className="dashboard-card-label">Totalt denna månad</span>
-          <span className="dashboard-card-value">{formatCurrency(thisTotal)}</span>
+          <span className="dashboard-card-value dashboard-card-value-dual">
+            {formatCurrency(thisTotalGross)} <span className="dashboard-card-value-exkl">exkl. Utlägg: {formatCurrency(thisTotal)}</span>
+          </span>
           <span className="dashboard-card-meta">
             {MONTHS[currentMonth - 1]} {currentYear}
           </span>
@@ -662,8 +665,8 @@ export default function Dashboard({
             {expandedCard === "total" && (
               <div className="dashboard-expanded-card">
                 <h3>Totalt denna månad</h3>
-                <p className="dashboard-expanded-value">{formatCurrency(thisTotal)}</p>
-                <p className="dashboard-expanded-meta">{MONTHS[currentMonth - 1]} {currentYear}</p>
+                <p className="dashboard-expanded-value">{formatCurrency(thisTotalGross)}</p>
+                <p className="dashboard-expanded-meta">exkl. Utlägg: {formatCurrency(thisTotal)} · {MONTHS[currentMonth - 1]} {currentYear}</p>
               </div>
             )}
             {expandedCard === "compare" && (
@@ -813,7 +816,7 @@ export default function Dashboard({
                   {expenseView === "member" && "Utgifter per kort/medlem"}
                   {" · "}{MONTHS[currentMonth - 1]} {currentYear}
                 </h3>
-                <p className="dashboard-expanded-total">Totalt {formatCurrency(thisTotal)}</p>
+                <p className="dashboard-expanded-total">Totalt {formatCurrency(thisTotalGross)} (exkl. Utlägg: {formatCurrency(thisTotal)})</p>
                 <div className="dashboard-expanded-charts-grid">
                   {expenseView === "section" && (
                     <>
